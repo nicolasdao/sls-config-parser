@@ -1,0 +1,34 @@
+{
+  "name": "sls-config-parser",
+  "version": "0.0.1",
+  "description": "Parses serverless.yml files so that their values can be use locally in JS code during development.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicolasdao/sls-config-parser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nicolasdao/sls-config-parser/issues"
+  },
+  "homepage": "https://github.com/nicolasdao/sls-config-parser#readme",
+  "scripts": {
+    "lint": "eslint index.js src/ test/ --fix",
+    "push": "git push --follow-tags origin master",
+    "rls": "standard-version --release-as",
+    "start": "NODE_ENV=production node index.js",
+    "test": "mocha --exit",
+    "v": "node -e \"console.log(require('./package.json').version)\""
+  },
+  "author": "Nicolas Dao",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "eslint": "^4.19.1",
+    "mocha": "^5.2.0",
+    "standard-version": "^6.0.1"
+  },
+  "dependencies": {
+    "co": "^4.6.0",
+    "yamljs": "^0.3.0"
+  }
+}
