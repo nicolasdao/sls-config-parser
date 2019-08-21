@@ -861,6 +861,27 @@ const setProperty = (obj,prop, value) => {
 	return obj
 }
 
+/**
+ * Gets an object's property based on the property path. 
+ * 
+ * @param  {Object} obj   Original object.
+ * @param  {String} prop  Property to be set (e.g., 'name' or 'project.name').
+ * @return {Object}       Original object with the property set.
+ */
+const getProperty = (obj,prop) => {
+	if (!prop)
+		return obj 
+	
+	obj = obj || {}
+	const props = prop.split('.')
+	const l = props.length-1
+	return props.reduce((acc,p,idx) => {
+		if (idx == l)
+			return acc[p]
+		return acc[p] || {}
+	},obj)
+}
+
 //////////////////////////                         START OBJECT HELPERS                                 ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -937,6 +958,7 @@ module.exports = {
 		mirror,
 		getType: getObjType,
 		'set':setProperty,
+		'get':getProperty,
 		isEmpty: isEmptyObj,
 		isObj,
 		diff: getDiff,

@@ -15,13 +15,7 @@ service: graphql
 
 custom:
   stage: ${opt:stage, 'dev'}
-  dynamoDB:
-    devProvisionedThroughput:
-      ReadCapacityUnits: 1
-      WriteCapacityUnits: 1
-    prodProvisionedThroughput:
-      ReadCapacityUnits: 2
-      WriteCapacityUnits: 2
+  config: ${file(./config/local.yml):stages}
 
 provider:
   name: aws
@@ -106,17 +100,11 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties: 
         TableName: user_${self:provider.stage}
-        AttributeDefinitions: 
-          - AttributeName: id
-            AttributeType: N
-          - AttributeName: username
-            AttributeType: S
-          - AttributeName: data
-            AttributeType: M
+        AttributeDefinitions: ${file(config/schemaDef.yml)}
         KeySchema: 
           - AttributeName: id
             KeyType: N
-        ProvisionedThroughput: ${self:custom.dynamoDB.${self:provider.stage}ProvisionedThroughput}
+        ProvisionedThroughput: ${self:custom.config.${self:provider.stage}.dynamoDB.ProvisionedThroughput}
         Tags: 
           - Key: Type
             Value: test

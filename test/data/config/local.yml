@@ -1,0 +1,11 @@
+stages:
+  dev:
+    dynamoDB:
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  prod:
+    dynamoDB:
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2

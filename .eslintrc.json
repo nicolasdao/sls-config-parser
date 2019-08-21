@@ -9,6 +9,7 @@
         "process": false,
         "describe": false,
         "it": false,
+        "xit": false,
         "Buffer": false,
         "__dirname": false
     },
