@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 0.0.2 (2019-08-24)
+
+
+### Features
+
+* Add support for converting a YAML file to a JSON file. ([0a66388](https://github.com/nicolasdao/sls-config-parser/commit/0a66388))
+* Add support for parsing a basic serverless.yml file using options ([9378b1b](https://github.com/nicolasdao/sls-config-parser/commit/9378b1b))
+* Add support for the 'file' variable ([c8796d4](https://github.com/nicolasdao/sls-config-parser/commit/c8796d4))
+
+
+
 ### [0.0.6](https://github.com/nicolasdao/template-emptyjs/compare/v0.0.5...v0.0.6) (2019-07-24)
 
 
