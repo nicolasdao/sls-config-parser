@@ -1,8 +1,9 @@
 const co = require('co')
 const YAML = require('yamljs')
 const { file:fileHelp, obj:objHelp } = require('./utils')
+const { join, dirname } = require('path')
 
-const _parse = (str, ymlPath) => {
+const _parseYmlToJson = (str, ymlPath) => {
 	try {
 		return YAML.parse(str)
 	} catch(err) {
@@ -72,7 +73,8 @@ const _getRefDetails = ref => {
 		if (filePath) {
 			const vars = ref.replace(`file(${filePath})`,'').replace(':','').split('.')
 			const _path = [filePath, ...vars]
-			output.file = { path: _path, dotPath:null, alt:null } 
+			output.type = 'file'
+			output.file = { path: _path, dotPath:vars.join('.'), alt:null } 
 		}
 	}
 	else if (ref.indexOf('sls') == 0)
@@ -240,20 +242,53 @@ const _getExplicitTokenRefs = (config, ancestors) => {
 	}, [])
 }
 
-const _replaceTokens = (config, options) => {
+const _replaceTokens = (config, rootFolder, options) => co(function *(){
 	options = options || {}
 	const explicitTokenRefs = _getExplicitTokenRefs(config) || []
 	if (!explicitTokenRefs.length)
 		return config
 	else {
-		const updatedConfig  = _injectTokens(config, explicitTokenRefs, options)
-		return _replaceTokens(updatedConfig, options)
+		const updatedConfig  = yield _injectTokens(config, explicitTokenRefs, rootFolder, options)
+		return _replaceTokens(updatedConfig, rootFolder, options)
 	}
+})
+
+/**
+ * Determines whether an pbject's path is resolved or not
+ * 
+ * @param  {Object} obj 	e.g., { person: ${self:custom.person}, industry: { name: 'tech' } }
+ * @param  {String} prop	e.g., 'person.name' or 'industry.name', or 'address.street'
+ * @return {Boolean}		e.g., respectively false, true and null
+ */
+const _isPathResolved = (obj,prop) => {
+	if (!prop)
+		return obj 
+	
+	obj = obj || {}
+	const props = prop.split('.')
+	const { resp } = props.reduce((acc,p) => {
+		if (acc.resp !== undefined)
+			return acc 
+
+		let val = acc.next[p]
+		if (val === undefined)
+			acc.resp = null 
+		else if (typeof(val) == 'string' && _getToken(val))
+			acc.resp = false
+		else if (val === null)
+			val = {}
+
+		acc.next = val
+
+		return acc
+	},{ next:obj })
+
+	return resp === undefined ? true : resp
 }
 
-const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens }) => {
-	const { raw, ref, dotPath } = tokenRef	// e.g., p: [ 'resources', 'Resources', 'UserTable', 'Properties', 'TableName' ], raw: 'user_${opt:custom.stage}'
-	const { type, value } = ref || {}		// e.g., type: 'opt', value:'prod'
+const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }) => co(function *() {
+	const { raw='', ref, dotPath='' } = tokenRef	// e.g., p: [ 'resources', 'Resources', 'UserTable', 'Properties', 'TableName' ], raw: 'user_${opt:custom.stage}'
+	const { type='', value } = ref || {}		// e.g., type: 'opt', value:'prod'
 	const defaultValue = ref[type].alt		// e.g., 'dev'
 	let resolvedValue = value 
 
@@ -271,10 +306,16 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens }) => {
 		} 
 		// Case 1.2: Resolve 'self'
 		else if (type == 'self') {
+			// If the 'self' path cannot be resolved because it depends on another token to be resolved first, than skip
+			if (ref.self.dotPath && _isPathResolved(config, ref.self.dotPath) === false)
+				return 
 			// Get self value from 'config'
 			const explicitValue = ref.self.dotPath ? objHelp.get(config, ref.self.dotPath) : null
-			if (!explicitValue)
+			if (!explicitValue) {
+				console.log(JSON.stringify(config, null, ' '))
+				console.log(ref.self.dotPath)
 				throw new Error(`'self' variable ${ref.self.dotPath} located under ${dotPath} not found. Check if there are typos.`)
+			}
 
 			// If the self's value is not a string, or is a string with no dynamic variable, then keep it
 			if (typeof(explicitValue) != 'string' || !_getToken(explicitValue))
@@ -282,47 +323,59 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens }) => {
 			else { // else try to find the self's in the 'tokenRefs' to resolve it.
 				const selfTokenRef = tokenRefs.find(({ dotPath:dp }) => dp == ref.self.dotPath)
 				if (selfTokenRef) 
-					_resolveTokenRef({ config, tokenRef:selfTokenRef, tokenRefs, optTokens })
+					yield _resolveTokenRef({ config, tokenRef:selfTokenRef, tokenRefs, optTokens, rootFolder })
 			}
+		} else if (type == 'file') {
+			const externalConfigPath = join(rootFolder, ref.file.path[0])
+			const [, ...props] = ref.file.path
+			const propsPath = props.join('.')
+			const externalConfig = yield parse(externalConfigPath, optTokens)
+			if (!externalConfig)
+				throw new Error(`'file' with path ${externalConfigPath} located under ${dotPath} is empty.`)
+
+			resolvedValue = propsPath ? objHelp.get(externalConfig, propsPath) : externalConfig
 		}
 	}
 
 	if (resolvedValue) {
 		// 2. Mutate the original 'config' object
-		const concreteValue = typeof(resolvedValue) != 'object' ? tokenRef.raw.replace(tokenRef.ref.raw, resolvedValue) : resolvedValue
+		const concreteValue = typeof(resolvedValue) != 'object' ? raw.replace(tokenRef.ref.raw, resolvedValue) : resolvedValue
 		objHelp.set(config, dotPath, concreteValue)
 		// 3. Mutate the 'tokenRef' value to save time for next iteration
 		tokenRef.ref.value = resolvedValue
 	}
-}
+})
 
-const _injectTokens = (config, explicitTokenRefs, optTokens) => {
+const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(function *(){
 	optTokens = optTokens || {}
 	explicitTokenRefs = explicitTokenRefs || []
 	optTokens = optTokens || {}
 
-	explicitTokenRefs.forEach(tokenRef => _resolveTokenRef({
+	yield explicitTokenRefs.map(tokenRef => _resolveTokenRef({
 		config,
 		tokenRef,
 		tokenRefs: explicitTokenRefs,
-		optTokens
+		optTokens,
+		rootFolder
 	}))
 
 	return config
-}
+})
 
 const parse = (ymlPath, options) => co(function *() {
 	const fileExists = yield fileHelp.exists(ymlPath)
 	if (!fileExists)
 		throw new Error(`YAML file ${ymlPath} not found.`)
 
+	const rootFolder = dirname(ymlPath)
+
 	const ymlContent = yield fileHelp.read(ymlPath)
 	if (!ymlContent || !ymlContent.length)
 		throw new Error(`YAML file ${ymlPath} is empty.`)
 	
-	const config = _parse(ymlContent.toString(), ymlPath)
+	const config = _parseYmlToJson(ymlContent.toString(), ymlPath)
 
-	return _replaceTokens(config, options)
+	return yield _replaceTokens(config, rootFolder, options)
 }).catch(err => {
 	throw new Error(err.stack)
 })

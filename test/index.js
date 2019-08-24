@@ -13,7 +13,7 @@ const { join } = require('path')
 
 describe('index', () => {
 	describe('#parse', () => {
-		it('Should parse a serverless.yml file to JSON.', done => { co(function *(){
+		it('01 - Should parse a serverless.yml file to JSON.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const config = yield parse(ymlPath)
 			const { service, functions } = config || {}
@@ -24,7 +24,7 @@ describe('index', () => {
 			done()
 		}).catch(done)})
 
-		it('Should resolve the dynamic variables using the default settings inside the serverless.yml file.', done => { co(function *(){
+		it('02 - Should resolve the dynamic variables using the default settings inside the serverless.yml file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const config = yield parse(ymlPath)
 			const { custom, provider, resources } = config || {}
@@ -36,7 +36,7 @@ describe('index', () => {
 			done()
 		}).catch(done)})
 		
-		it('Should resolve the dynamic variables inside the serverless.yml file.', done => { co(function *(){
+		it('03 - Should resolve the dynamic variables inside the serverless.yml file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const config = yield parse(ymlPath, { stage:'prod' })
 			const { custom, provider, resources } = config || {}
@@ -47,9 +47,56 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '05')
 			done()
 		}).catch(done)})
+		
+		it('04 - Should support the \'file\' function (BASIC TEST).', done => { co(function *(){
+			const ymlPath = join(__dirname, './data/serverless_02.yml')
+			const config = yield parse(ymlPath, { stage:'prod' })
+			const { custom, resources } = config || {}
+			assert.equal(custom.stage, 'prod', '01')
+			assert.equal(custom.config.dev.dynamoDB.ProvisionedThroughput.ReadCapacityUnits, 1, '02')
+			assert.equal(custom.config.prod.dynamoDB.ProvisionedThroughput.ReadCapacityUnits, 2, '03')
+			assert.equal(resources.Resources.UserTable.Properties.TableName, 'user_prod', '04')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions.length, 3, '05')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[0].AttributeName, 'id', '06')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[1].AttributeName, 'username', '07')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '08')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 2, '09')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
+			done()
+		}).catch(done)})
+		
+		it('05 - Should support the \'file\' function (INTERMEDIATE TEST WITH NESTED VARIABLES).', done => { co(function *(){
+			const ymlPath = join(__dirname, './data/serverless_03.yml')
+			let config = yield parse(ymlPath, { stage:'prod' })
+			let { custom, resources } = config || {}
+			assert.equal(custom.stage, 'prod', '01')
+			assert.equal(custom.config.dynamoDB.ProvisionedThroughput.ReadCapacityUnits, 2, '02')
+			assert.equal(resources.Resources.UserTable.Properties.TableName, 'user_prod', '03')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions.length, 4, '04')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[0].AttributeName, 'id', '05')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[1].AttributeName, 'username', '06')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '07')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[3].AttributeName, 'log', '08')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 2, '09')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
+
+			config = yield parse(ymlPath)
+			custom = (config || {}).custom
+			resources = (config || {}).resources
+			assert.equal(custom.stage, 'dev', '11')
+			assert.equal(custom.config.dynamoDB.ProvisionedThroughput.ReadCapacityUnits, 1, '12')
+			assert.equal(resources.Resources.UserTable.Properties.TableName, 'user_dev', '13')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions.length, 3, '14')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[0].AttributeName, 'id', '15')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[1].AttributeName, 'username', '16')
+			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '17')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 1, '18')
+			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 1, '19')
+			done()
+		}).catch(done)})
 	})
 	describe('#_.getExplicitTokenRefs', () => {
-		it('Should parse a serverless.yml file to JSON.', () => {
+		it('01 - Should parse a serverless.yml file to JSON.', () => {
 			const tokenRefs = getExplicitTokenRefs({
 				'service': 'graphql',
 				'custom': {

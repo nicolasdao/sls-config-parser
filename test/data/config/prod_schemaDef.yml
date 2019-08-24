@@ -1,0 +1,8 @@
+- AttributeName: id
+  AttributeType: N
+- AttributeName: username
+  AttributeType: S
+- AttributeName: data
+  AttributeType: M
+- AttributeName: log
+  AttributeType: S
