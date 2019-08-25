@@ -1,6 +1,6 @@
 {
   "name": "sls-config-parser",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Parses serverless.yml files so that their values can be use locally in JS code during development.",
   "bin": {
     "slscfg": "./index.js"
