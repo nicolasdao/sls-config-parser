@@ -2,7 +2,10 @@
   "name": "sls-config-parser",
   "version": "0.0.3",
   "description": "Parses serverless.yml files so that their values can be use locally in JS code during development.",
-  "main": "index.js",
+  "bin": {
+    "slscfg": "./index.js"
+  },
+  "main": "./src/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/nicolasdao/sls-config-parser.git"

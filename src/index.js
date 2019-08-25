@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2017-2019, Neap Pty Ltd.
+ * All rights reserved.
+ * 
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree.
+*/
+
 const co = require('co')
 const YAML = require('yamljs')
 const { file:fileHelp, obj:objHelp } = require('./utils')
@@ -452,7 +460,7 @@ const _getEnv = (config, options) => co(function *(){
 	}
 
 	return Object.keys(functions).reduce((acc,fname) => {
-		if (functions[fname].environment && (!filterFunctions || filterFunctions.indexOf(fname) >= 0))
+		if (functions[fname].environment && (!filterFunctions || functionNames.indexOf(fname) >= 0))
 			acc = { ...acc, ...functions[fname].environment }
 		return acc
 	}, ignoreGlobal ? {} : globalEnv)
@@ -461,6 +469,7 @@ const _getEnv = (config, options) => co(function *(){
 })
 
 const Config = function (ymlPath, options) {
+	ymlPath = ymlPath || join(process.cwd(), 'serverless.yml')
 	let config
 
 	this.config = () => co(function *(){
@@ -473,26 +482,26 @@ const Config = function (ymlPath, options) {
 	/**
 	 * Gets the environment variables from the 'ymlPath' config file.
 	 * 
-	 * @param {[String]}	options.functions			If set, the array filters the functions that need to return env.
-	 * @param {Boolean}		options.format				Default 'standard'. Valid values:
+	 * @param {[String]}	envOptions.functions			If set, the array filters the functions that need to return env.
+	 * @param {Boolean}		envOptions.format				Default 'standard'. Valid values:
 	 *                                     					- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }
 	 *                                     					- 'array': Output is formatted as follow: [{ name:'VAL1', value: 'hello' }, { name: 'VAL2', value: 'world' }]
-	 * @param {Boolean}		options.ignoreGlobal		Default false. If true, global variables are ignored.
-	 * @param {Boolean}		options.ignoreFunctions		Default false. If true, the variables specific to functions are ignored.
-	 * @param {Boolean}		options.inclAccessCreds		Default false. If true, then, based on the 'config.provider.profile' 
-	 *                                            		(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
-	 * @param {String}		options.awsCreds			Default '~/.aws/credentials'
+	 * @param {Boolean}		envOptions.ignoreGlobal			Default false. If true, global variables are ignored.
+	 * @param {Boolean}		envOptions.ignoreFunctions		Default false. If true, the variables specific to functions are ignored.
+	 * @param {Boolean}		envOptions.inclAccessCreds		Default false. If true, then, based on the 'config.provider.profile' 
+	 *                                            		 	(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
+	 * @param {String}		envOptions.awsCreds				Default '~/.aws/credentials'
 	 * 
-	 * @yield {Object/Array}  output					Based on the 'options.format', 
-	 *        												- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }
-	 *                                     					- 'array': Output is formatted as follow: [{ name:'VAL1', value: 'hello' }, { name: 'VAL2', value: 'world' }]
+	 * @yield {Object/Array}  output						Based on the 'options.format', 
+	 *        													- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }
+	 *                                     						- 'array': Output is formatted as follow: [{ name:'VAL1', value: 'hello' }, { name: 'VAL2', value: 'world' }]
 	 */
-	this.env = options => co(function *() {
+	this.env = envOptions => co(function *() {
 		if (!config)
 			config = yield _parse(ymlPath, options)
 		
-		const env = yield _getEnv(config, options) || {}
-		if (options && options.format == 'array') {
+		const env = yield _getEnv(config, envOptions) || {}
+		if (envOptions && envOptions.format == 'array') {
 			return Object.keys(env).map(key => ({ name: key, value: env[key] }))
 		} else
 			return env

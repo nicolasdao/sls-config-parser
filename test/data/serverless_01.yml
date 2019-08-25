@@ -29,6 +29,9 @@ provider:
   region: ap-southeast-2
   profile: fairplay
   stage: ${self:custom.stage}
+  environment:
+    DATA_01: hello ${self:provider.stage}
+    DATA_02: boom boom
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
@@ -96,8 +99,18 @@ functions:
 #            path: /hello
 
 #    Define function environment variables here
-#    environment:
-#      variable2: value2
+    environment:
+      GRAPHQL_ENV_01: graphql_01
+      GRAPHQL_ENV_02: graphql_02
+  rest:
+    handler: handler.rest
+    events:
+      - http:
+          path: /rest
+          method: ANY
+    environment:
+      REST_ENV_01: rest_01
+      REST_ENV_02: rest_02
 
 # you can add CloudFormation resource templates here
 resources:
