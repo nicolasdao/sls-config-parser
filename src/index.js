@@ -496,7 +496,7 @@ const Config = function (ymlPath, options) {
 	 *        													- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }
 	 *                                     						- 'array': Output is formatted as follow: [{ name:'VAL1', value: 'hello' }, { name: 'VAL2', value: 'world' }]
 	 */
-	this.env = envOptions => co(function *() {
+	const getEnv = envOptions => co(function *() {
 		if (!config)
 			config = yield _parse(ymlPath, options)
 		
@@ -505,6 +505,18 @@ const Config = function (ymlPath, options) {
 			return Object.keys(env).map(key => ({ name: key, value: env[key] }))
 		} else
 			return env
+	})
+	this.env = getEnv
+
+	this.setEnv = envOptions => co(function *() {
+		envOptions = envOptions || {}
+		const envs = yield getEnv({ ...envOptions, format:'array' })
+		if (!envs || !envs.length)
+			return
+
+		envs.forEach(({ name, value }) => {
+			process.env[name] = value
+		})
 	})
 
 	return this
