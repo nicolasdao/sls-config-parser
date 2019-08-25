@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.5](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.4...v0.0.5) (2019-08-25)
+
+
+### Features
+
+* Add support for setting environment variables ([2eb6ad7](https://github.com/nicolasdao/sls-config-parser/commit/2eb6ad7))
+
+
+
 ### [0.0.4](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.3...v0.0.4) (2019-08-25)
 
 
