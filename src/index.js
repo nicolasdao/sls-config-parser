@@ -468,7 +468,13 @@ const _getEnv = (config, options) => co(function *(){
 	throw new Error(err.stack)
 })
 
-const Config = function (ymlPath, options) {
+/**
+ * [Config description]
+ * @param {String} options.path		Default is the 'serverless.yml' path in the current working directory.
+ * @param {String} options.anyOptionYouWant
+ */
+const Config = function (options) {
+	let { path:ymlPath } = options || {}
 	ymlPath = ymlPath || join(process.cwd(), 'serverless.yml')
 	let config
 

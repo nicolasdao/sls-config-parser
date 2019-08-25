@@ -159,7 +159,7 @@ describe('index', () => {
 	describe('#Config.config()', () => {
 		it('01 - Should parse a serverless.yml file to JSON.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath)
+			const cfg = new Config({ path:ymlPath })
 			const config = yield cfg.config()
 			const { service, functions } = config || {}
 			assert.equal(service, 'graphql', '01')
@@ -171,7 +171,7 @@ describe('index', () => {
 
 		it('02 - Should resolve the dynamic variables using the default settings inside the serverless.yml file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath, { stage:null })
+			const cfg = new Config({ path:ymlPath, stage:null })
 			const config = yield cfg.config()
 			const { custom, provider, resources } = config || {}
 			assert.equal(custom.stage, 'dev', '01')
@@ -184,7 +184,7 @@ describe('index', () => {
 		
 		it('03 - Should resolve the dynamic variables inside the serverless.yml file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath, { stage:'prod' })
+			const cfg = new Config({ path:ymlPath, stage:'prod' })
 			const config = yield cfg.config()
 			const { custom, provider, resources } = config || {}
 			assert.equal(custom.stage, 'prod', '01')
@@ -197,7 +197,7 @@ describe('index', () => {
 		
 		it('04 - Should support the \'file\' function (BASIC TEST).', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_02.yml')
-			const cfg = new Config(ymlPath, { stage:'prod' })
+			const cfg = new Config({ path:ymlPath, stage:'prod' })
 			const config = yield cfg.config()
 			const { custom, resources } = config || {}
 			assert.equal(custom.stage, 'prod', '01')
@@ -215,7 +215,7 @@ describe('index', () => {
 		
 		it('05 - Should support the \'file\' function (INTERMEDIATE TEST WITH NESTED VARIABLES).', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_03.yml')
-			let cfg = new Config(ymlPath, { stage:'prod' })
+			let cfg = new Config({ path:ymlPath, stage:'prod' })
 			let config = yield cfg.config()
 			let { custom, resources } = config || {}
 			assert.equal(custom.stage, 'prod', '01')
@@ -229,7 +229,7 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 2, '09')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
 
-			cfg = new Config(ymlPath)
+			cfg = new Config({ path:ymlPath })
 			config = yield cfg.config()
 			custom = (config || {}).custom
 			resources = (config || {}).resources
@@ -248,7 +248,7 @@ describe('index', () => {
 	describe('#Config.env()', () => {
 		it('01 - Should get all environment variables from the YAML file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath)
+			const cfg = new Config({ path:ymlPath })
 			const env = yield cfg.env()
 			assert.equal(env.DATA_01, 'hello dev', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
@@ -260,7 +260,7 @@ describe('index', () => {
 		}).catch(done)})
 		it('02 - Should support selecting specific functions.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath, { stage:'prod' })
+			const cfg = new Config({ path:ymlPath, stage:'prod' })
 			const env = yield cfg.env({ functions:['graphql'] })
 			assert.equal(env.DATA_01, 'hello prod', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
@@ -272,7 +272,7 @@ describe('index', () => {
 		}).catch(done)})
 		it('03 - Should support focusing on global variables only.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath, { stage:'prod' })
+			const cfg = new Config({ path:ymlPath, stage:'prod' })
 			const env = yield cfg.env({ ignoreFunctions:true })
 			assert.equal(env.DATA_01, 'hello prod', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
@@ -284,7 +284,7 @@ describe('index', () => {
 		}).catch(done)})
 		it('04 - Should support focusing on functions variables only.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath)
+			const cfg = new Config({ path:ymlPath })
 			const env = yield cfg.env({ ignoreGlobal:true })
 			assert.isNotOk(env.DATA_01, '01')
 			assert.isNotOk(env.DATA_02, '02')
@@ -296,7 +296,7 @@ describe('index', () => {
 		}).catch(done)})
 		it('05 - Should support including the access key and secret.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath)
+			const cfg = new Config({ path:ymlPath })
 			const env = yield cfg.env({ inclAccessCreds:true, awsCreds:join(__dirname, './data/credentials_05') })
 			assert.equal(env.DATA_01, 'hello dev', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
@@ -310,7 +310,7 @@ describe('index', () => {
 		}).catch(done)})
 		it('06 - Should format the env as an array.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
-			const cfg = new Config(ymlPath)
+			const cfg = new Config({ path:ymlPath })
 			const env = yield cfg.env({ inclAccessCreds:true, awsCreds:join(__dirname, './data/credentials_05'), format:'array' })
 			assert.equal(env.find(({ name }) => name == 'DATA_01').value, 'hello dev', '01')
 			assert.equal(env.find(({ name }) => name == 'DATA_02').value, 'boom boom', '02')
