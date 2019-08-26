@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.7](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.6...v0.0.7) (2019-08-26)
+
+
+### Features
+
+* Add support for setting the AWS_REGION based on the .aws/config ([0f2534f](https://github.com/nicolasdao/sls-config-parser/commit/0f2534f))
+
+
+
 ### [0.0.6](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.5...v0.0.6) (2019-08-25)
 
 
