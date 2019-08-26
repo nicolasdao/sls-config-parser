@@ -1,16 +1,18 @@
 # Serverless Config File Parser &middot; [![Tests](https://travis-ci.org/nicolasdao/sls-config-parser.svg?branch=master)](https://travis-ci.org/nicolasdao/sls-config-parser) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![Neap](https://neap.co/img/made_by_neap.svg)](#this-is-what-we-re-up-to)
-__*sls-config-parser*__ parses serverless.yml files so that its values can be use locally in JS code during development, including automatically setting up environment variables. Its main usage is to set up the environment variables (including the access key and secret from the `~/.aws/credentials`) locally so it is possible to test functions locally. Setting up the environment variables is done in a package.json script as follow:
+__*sls-config-parser*__ parses serverless.yml files so that its values can be used locally in JS code during development, including automatically setting up environment variables. Its main usage is to set up the environment variables (including the access key and secret from the `~/.aws/credentials` as well as the region from the `~/.aws/config`) locally so it is possible to test functions locally. Setting up the environment variables is done in a package.json script as follow:
 
 ```js
 "scripts": {
-	"start": "node -r sls-config-parser/setenv index.js --inclcreds"
+	"start": "node -r sls-config-parser/setenv index.js --inclcreds --stage prod"
 }
 ```
+
+This script sets up the environment variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
 
 > WARNING: The package is in beta. Limitations:
 >	- Not tested on Windows.
 >	- Only works with YAML files (JSON support coming soon).
->	- No support for CloudFormation intrinsic functions yet.
+>	- No support for CloudFormation intrinsic functions yet (e.g., Ref, !Sub, !Join).
 
 # Table of Contents
 
@@ -20,7 +22,7 @@ __*sls-config-parser*__ parses serverless.yml files so that its values can be us
 >	- [Getting the environment variables](#getting-the-environment-variables)
 >	- [Setting up environment variables](#setting-up-environment-variables)
 >		- [Why is it important?](#why-is-it-important)
->		- [[Setting things up](#setting-things-up)
+>		- [Setting things up](#setting-things-up)
 > * [About Neap](#this-is-what-we-re-up-to)
 > * [License](#license)
 

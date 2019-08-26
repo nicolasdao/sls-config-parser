@@ -12,7 +12,7 @@ const { file:fileHelp, obj:objHelp } = require('./utils')
 const { join, dirname } = require('path')
 const { homedir } = require('os')
 
-const AWS_CREDS = join(homedir(), '.aws/credentials')
+const AWS_DIR = join(homedir(), '.aws')
 
 const _parseYmlToJson = (str, ymlPath) => {
 	try {
@@ -398,25 +398,34 @@ const _parse = (ymlPath, options) => co(function *() {
  *
  * 
  * @param {String}	options.profile		Default 'default'
- * @param {String}	options.awsCreds	Default '~/.aws/credentials'
+ * @param {String}	options.awsDir		Default '~/.aws/'
  * 
  * @yield {String}	output.AWS_ACCESS_KEY_ID
  * @yield {String}	output.AWS_SECRET_ACCESS_KEY
+ * @yield {String}	output.AWS_REGION				Default 'us-east-1'
  */
 const _getAccessCreds = (options) => co(function *() {
-	const { profile='default', awsCreds=AWS_CREDS } = options || {}
+	const { profile='default', awsDir } = options || {}
+	const awsCreds = join(awsDir || AWS_DIR, 'credentials')
+	const awsConfig = join(awsDir || AWS_DIR, 'config')
 	const fileExists = yield fileHelp.exists(awsCreds)
 	if (!fileExists)
 		throw new Error(`${awsCreds} file not found. Create one and then fill it with your AWS access key and secret.`)
 
-	const creds = yield fileHelp.read(awsCreds)
+	const [creds, config] = yield [fileHelp.read(awsCreds), fileHelp.exists(awsConfig).then(y => y ? fileHelp.read(awsConfig) : null)]
 
 	if (!creds || !creds.length)
 		throw new Error(`${awsCreds} file is empty. Create one and then fill it with your AWS access key and secret.`)
 
-	const content = creds.toString().replace(/\r\n/g, '_linebreak_').replace(/\n/g, '_linebreak_')
-	const reg = new RegExp(`\\[${profile}\\](.*?)aws_secret_access_key(\\s*)=(\\s*)(.*?)(\\s*)(_linebreak_|$)`)
-	const [,access_key_str,,,access_secret] = content.match(reg) || []
+	const credsContent = creds.toString().replace(/\r\n/g, '_linebreak_').replace(/\n/g, '_linebreak_')
+	const configContent = (config || '').toString().replace(/\r\n/g, '_linebreak_').replace(/\n/g, '_linebreak_')
+	
+	const credsRegEx = new RegExp(`\\[${profile}\\](.*?)aws_secret_access_key(\\s*)=(\\s*)(.*?)(\\s*)(_linebreak_|$)`)
+	const [,access_key_str,,,access_secret] = credsContent.match(credsRegEx) || []
+
+	const configRegEx = new RegExp(`\\[(profile){0,1}\\s*${profile}\\](.*?)(\\[|$)`)
+	const [,,configStr=''] = configContent.match(configRegEx) || []
+	const [, region] = configStr.replace(/(_linebreak_)+/g, ' ').match(/region\s*=\s*(.*?)(\s|$)/) || []
 	
 	if (!access_key_str || !access_secret)
 		return null
@@ -425,7 +434,8 @@ const _getAccessCreds = (options) => co(function *() {
 
 	return {
 		AWS_ACCESS_KEY_ID: access_key,
-		AWS_SECRET_ACCESS_KEY: access_secret.trim()
+		AWS_SECRET_ACCESS_KEY: access_secret.trim(),
+		AWS_REGION: region || 'us-east-1'
 	}
 })
 
@@ -438,7 +448,7 @@ const _getAccessCreds = (options) => co(function *() {
  * @param {Boolean}		options.ignoreFunctions		Default false. If true, the variables specific to functions are ignored.
  * @param {Boolean}		options.inclAccessCreds		Default false. If true, then, based on the 'config.provider.profile'.
  *                                            		(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
- * @param {String}		options.awsCreds			Default '~/.aws/credentials'
+ * @param {String}		options.awsDir				Default '~/.aws/'
  * @yield {Object}		output
  */
 const _getEnv = (config, options) => co(function *(){
@@ -454,8 +464,8 @@ const _getEnv = (config, options) => co(function *(){
 
 	if (inclAccessCreds) {
 		const profile = (config.provider || {}).profile
-		const awsCreds = options.awsCreds
-		const accessCreds = yield _getAccessCreds({ profile, awsCreds }) || {}
+		const awsDir = options.awsDir
+		const accessCreds = yield _getAccessCreds({ profile, awsDir }) || {}
 		globalEnv = { ...globalEnv, ...accessCreds }
 	}
 
@@ -496,7 +506,7 @@ const Config = function (options) {
 	 * @param {Boolean}		envOptions.ignoreFunctions		Default false. If true, the variables specific to functions are ignored.
 	 * @param {Boolean}		envOptions.inclAccessCreds		Default false. If true, then, based on the 'config.provider.profile' 
 	 *                                            		 	(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
-	 * @param {String}		envOptions.awsCreds				Default '~/.aws/credentials'
+	 * @param {String}		envOptions.awsDir				Default '~/.aws/'
 	 * 
 	 * @yield {Object/Array}  output						Based on the 'options.format', 
 	 *        													- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }

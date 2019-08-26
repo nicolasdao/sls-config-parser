@@ -1,0 +1,7 @@
+[default]
+output = json
+region = ap-southeast-2
+
+[profile supercool]
+output = json
+region = us-west-2

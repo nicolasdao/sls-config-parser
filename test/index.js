@@ -117,41 +117,46 @@ describe('index', () => {
 	describe('#_.getAccessCreds', () => {
 		it('01 - Should extract the default keys.', done => {
 			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = yield getAccessCreds({ awsCreds:join(__dirname,'./data/credentials_01') })
+				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ awsDir:join(__dirname,'./data/aws_01') })
 				assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
 				assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
+				assert.equal(AWS_REGION, 'us-east-1', '03')
 				done()
 			}).catch(done)
 		})
 		it('02 - Should extract the default keys even for weirdly formatted files.', done => {
 			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = yield getAccessCreds({ awsCreds:join(__dirname,'./data/credentials_02') })
+				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ awsDir:join(__dirname,'./data/aws_02') })
 				assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
 				assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
+				assert.equal(AWS_REGION, 'ap-southeast-2', '03')
 				done()
 			}).catch(done)
 		})
 		it('03 - Should extract the a specific profile\'s keys.', done => {
 			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = yield getAccessCreds({ profile:'supercool', awsCreds:join(__dirname,'./data/credentials_03') })
+				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_03') })
 				assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
 				assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
+				assert.equal(AWS_REGION, 'us-west-2', '03')
 				done()
 			}).catch(done)
 		})
 		it('04 - Should extract the a specific profile\'s keys (weird format file 01).', done => {
 			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = yield getAccessCreds({ profile:'supercool', awsCreds:join(__dirname,'./data/credentials_04') })
+				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_04') })
 				assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
 				assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
+				assert.equal(AWS_REGION, 'us-west-2', '03')
 				done()
 			}).catch(done)
 		})
 		it('05 - Should extract the a specific profile\'s keys (weird format file 02).', done => {
 			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = yield getAccessCreds({ profile:'helloworld', awsCreds:join(__dirname,'./data/credentials_05') })
+				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'helloworld', awsDir:join(__dirname,'./data/aws_05') })
 				assert.equal(AWS_ACCESS_KEY_ID, 'JWUIBJKBUWGGJGJUGUJG', '01')
 				assert.equal(AWS_SECRET_ACCESS_KEY, 'dhejkwhdiuewhdjkhdegwfugewf', '02')
+				assert.equal(AWS_REGION, 'us-east-1', '03')
 				done()
 			}).catch(done)
 		})
@@ -297,7 +302,7 @@ describe('index', () => {
 		it('05 - Should support including the access key and secret.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ path:ymlPath })
-			const env = yield cfg.env({ inclAccessCreds:true, awsCreds:join(__dirname, './data/credentials_05') })
+			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05') })
 			assert.equal(env.DATA_01, 'hello dev', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
 			assert.equal(env.GRAPHQL_ENV_01, 'graphql_01', '03')
@@ -311,7 +316,7 @@ describe('index', () => {
 		it('06 - Should format the env as an array.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ path:ymlPath })
-			const env = yield cfg.env({ inclAccessCreds:true, awsCreds:join(__dirname, './data/credentials_05'), format:'array' })
+			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
 			assert.equal(env.find(({ name }) => name == 'DATA_01').value, 'hello dev', '01')
 			assert.equal(env.find(({ name }) => name == 'DATA_02').value, 'boom boom', '02')
 			assert.equal(env.find(({ name }) => name == 'GRAPHQL_ENV_01').value, 'graphql_01', '03')
