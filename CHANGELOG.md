@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.8](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.7...v0.0.8) (2019-08-27)
+
+
+### Bug Fixes
+
+* Infinite loop when variables can't be resolved ([057cf09](https://github.com/nicolasdao/sls-config-parser/commit/057cf09))
+
+
+
 ### [0.0.7](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.6...v0.0.7) (2019-08-26)
 
 
