@@ -7,7 +7,7 @@ __*sls-config-parser*__ parses serverless.yml files so that its values can be us
 }
 ```
 
-This script sets up the environment variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
+This script sets up the environment variables ccc based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
 
 > WARNING: The package is in beta. Limitations:
 >	- Not tested on Windows.

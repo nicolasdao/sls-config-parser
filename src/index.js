@@ -8,9 +8,10 @@
 
 const co = require('co')
 const YAML = require('yamljs')
-const { file:fileHelp, obj:objHelp } = require('./utils')
-const { join, dirname } = require('path')
 const { homedir } = require('os')
+const { join, dirname } = require('path')
+const crypto = require('crypto')
+const { file:fileHelp, obj:objHelp, collection } = require('./utils')
 
 const AWS_DIR = join(homedir(), '.aws')
 
@@ -253,17 +254,51 @@ const _getExplicitTokenRefs = (config, ancestors) => {
 	}, [])
 }
 
+/**
+ * Parses a tokenized serverless.yml file to a concrete JSON config file where tokens have been replaced.
+ *  
+ * @param {Object}	 config						Straight serverless.yml conversion from YML to JSON
+ * @param {String}	 rootFolder					Absolute past to the folder containing the serverless.yml file.
+ * @param {Object}	 options					Token values (e.g., { stage: 'prod' }) 
+ * @param {Number}	 options.__parseRecCount	Reserved keyword. Contains the number of '_parse' recursions. 
+ *                                         		It helps throwing exceptions when infinite loops are detected (i.e., 
+ *                                         	 	value > 100).
+ * @param {Number}	 options.__replTokensCount	Reserved keyword. Contains the number of '_replaceTokens' recursions. 
+ *                                         	 	It helps throwing exceptions when infinite loops are detected (i.e., 
+ *                                         	  	value > 100). 
+ * @param {[String]} options.__jobKeys          Set of unique IDs that uniquely identify a _replaceTokens job. If that 
+ *                                              job has already been required, then skip to prevent infinite loops.
+ * @yield {[type]} [description]
+ */
 const _replaceTokens = (config, rootFolder, options) => co(function *(){
 	options = options || {}
+	options.__replTokensCount = options.__replTokensCount || 0
+	options.__jobKeys = options.__jobKeys || []
+	options.__replTokensCount++
+
+	if (options.__replTokensCount > 100) {
+		let e = new Error('Failed to replace tokens. Infinite loop detected. This can be due to variables or file referencing each other.')
+		e.code = 1
+		throw e
+	}
+
 	const explicitTokenRefs = _getExplicitTokenRefs(config) || []
 	if (!explicitTokenRefs.length)
 		return config
 	else {
+		const jobKey = collection.sortBy(explicitTokenRefs.map(({ dotPath, raw }) => `${dotPath}-${typeof(raw) == 'string' ? raw : JSON.stringify(raw)}`)).join('_')
+		if (options.__jobKeys.indexOf(jobKey) >= 0) 
+			return config
+
+		options.__jobKeys.push(jobKey)
 		const updatedConfig  = yield _injectTokens(config, explicitTokenRefs, rootFolder, options)
 		return _replaceTokens(updatedConfig, rootFolder, options)
 	}
 }).catch(err => {
-	throw new Error(err.stack)
+	if (err && err.code == 1)
+		throw err
+	else
+		throw new Error(err.stack)
 })
 
 /**
@@ -344,6 +379,10 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }
 				throw new Error(`'file' with path ${externalConfigPath} located under ${dotPath} is empty.`)
 
 			resolvedValue = propsPath ? objHelp.get(externalConfig, propsPath) : externalConfig
+		} else if (type == 'env') {
+			const envName = ((ref.env || {}).path || [])[0] || ''
+			const envValue = envName? process.env[envName] : ''
+			resolvedValue = envValue
 		}
 	}
 
@@ -376,7 +415,30 @@ const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(f
 	throw new Error(err.stack)
 })
 
+/**
+ * Parses a tokenized serverless.yml file to a concrete JSON config file where tokens have been replaced.
+ *  
+ * @param {String}	ymlPath						Absolute path to the serverless.yml file.
+ * @param {Object}	options						Token values (e.g., { stage: 'prod' }) 
+ * @param {Number}	options.__parseRecCount		Reserved keyword. Contains the number of '_parse' recursions. 
+ *                                         		It helps throwing exceptions when infinite loops are detected (i.e., 
+ *                                         	 	value > 100).
+ * @param {Number}	options.__replTokensCount	Reserved keyword. Contains the number of '_replaceTokens' recursions. 
+ *                                         	 	It helps throwing exceptions when infinite loops are detected (i.e., 
+ *                                         	  	value > 100). 
+ * @yield {[type]} [description]
+ */
 const _parse = (ymlPath, options) => co(function *() {
+	options = options || {}
+	options.__parseRecCount = options.__parseRecCount || 0
+	options.__parseRecCount++
+
+	if (options.__parseRecCount > 100) {
+		let e = new Error(`Failed to parse file ${ymlPath}. Infinite loop detected. This can be due to variables or file referencing each other.`)
+		e.code = 1
+		throw e
+	}
+
 	const fileExists = yield fileHelp.exists(ymlPath)
 	if (!fileExists)
 		throw new Error(`YAML file ${ymlPath} not found.`)
@@ -387,11 +449,17 @@ const _parse = (ymlPath, options) => co(function *() {
 	if (!ymlContent || !ymlContent.length)
 		throw new Error(`YAML file ${ymlPath} is empty.`)
 	
-	const config = _parseYmlToJson(ymlContent.toString(), ymlPath)
+	// Replace all the '${sls:instanceId}' references.
+	const ymlPrefilled = ymlContent.toString().replace(/\$\{sls:\s*instanceId\s*\}/g, () => crypto.randomBytes(16).toString('hex'))
+
+	const config = _parseYmlToJson(ymlPrefilled, ymlPath)
 
 	return yield _replaceTokens(config, rootFolder, options)
 }).catch(err => {
-	throw new Error(err.stack)
+	if (err && err.code == 1)
+		throw err
+	else
+		throw new Error(err.stack)
 })
 
 /**

@@ -1,0 +1,91 @@
+service: stress-algorithm
+
+plugins:
+  - serverless-domain-manager
+
+custom:
+  stage: ${opt:stage, 'dev'}
+  local: ${file(./config/local_04.yml):stages}
+  vpcStackName: ${self:custom.local.${self:custom.stage}.cfStacks.VPC}
+  alertingStackName: ${cf:${self:custom.vpcStackName}.Alerting}
+  alertingARN: ${cf:${self:custom.alertingStackName}.TopicARN}
+  prefix: ${self:custom.local.${self:custom.stage}.coolio.prefix}
+  coolioStack: coolioBipbip-${self:custom.stage}
+  coolioDataName:
+    'Fn::ImportValue': 'coolioData-Name-${self:custom.stage}'
+  coolioResultName:
+    'Fn::ImportValue': 'coolioResult-Name-${self:custom.stage}'
+  coolioDataARN:
+    'Fn::ImportValue': 'coolioData-ARN-${self:custom.stage}'
+  coolioResultARN:
+    'Fn::ImportValue': 'coolioResult-ARN-${self:custom.stage}'
+  customDomain:
+    domainName: api.${self:custom.local.${self:custom.stage}.domain}
+    basePath: ''
+    certificateName: ${self:custom.local.${self:custom.stage}.certdomain}
+    stage: ${self:custom.stage}
+    createRoute53Record: true
+    endpointType: 'regional'
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  memorySize: 512
+  region: ap-southeast-2
+  logRetentionInDays: ${self:custom.local.${self:custom.stage}.LogRetentionInDays}
+  timeout: 30
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:DescribeTable
+        - dynamodb:GetRecords
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:GetItem
+      Resource:
+        - ${self:custom.coolioDataARN}
+    - Effect: Allow
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetRecords
+        - dynamodb:Scan
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - ${self:custom.coolioResultARN}
+  vpc: 
+    securityGroupIds:
+      - ${cf:${self:custom.vpcStackName}.LambdaExecSG}
+    subnetIds:
+      - ${cf:${cf:${self:custom.vpcStackName}.Vpc}.SubnetAPrivate}
+      - ${cf:${cf:${self:custom.vpcStackName}.Vpc}.SubnetBPrivate}
+  notificationArns:
+    - ${self:custom.alertingARN}
+  environment:
+    SERVICE: ${self:service}
+    STAGE: ${self:custom.stage}
+    COOLIO_DATA_TABLE: ${self:custom.coolioDataName}
+    COOLIO_RESULT_TABLE: ${self:custom.coolioResultName}
+    AUTH_ENDPOINT: ${self:custom.local.${self:custom.stage}.auth.endpoint}
+    AUTH_ADMIN_USER: ${self:custom.local.${self:custom.stage}.auth.admin_user}
+    AUTH_ADMIN_PWD: ${self:custom.local.${self:custom.stage}.auth.admin_pwd}
+  profile: coolio_stress_${self:custom.stage}
+
+functions:
+  graphql:
+    handler: index.handler
+    events:
+     - http:
+         path: /graphql
+         method: ANY
+     - http:
+         path: /graphql/{any+}
+         method: ANY

@@ -163,14 +163,16 @@ describe('index', () => {
 	})
 	describe('#Config.config()', () => {
 		it('01 - Should parse a serverless.yml file to JSON.', done => { co(function *(){
+			process.env.FUNC_PREFIX = 'hello'
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ path:ymlPath })
 			const config = yield cfg.config()
-			const { service, functions } = config || {}
+			const { service, functions, provider } = config || {}
 			assert.equal(service, 'graphql', '01')
 			assert.equal(functions.graphql.handler, 'handler.handler', '03')
 			assert.equal(functions.graphql.events[0].http.path, '/', '04')
 			assert.equal(functions.graphql.events[0].http.method, 'ANY', '05')
+			assert.equal(provider.funcPrefix, 'func-hello', '06')
 			done()
 		}).catch(done)})
 
@@ -249,6 +251,14 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 1, '19')
 			done()
 		}).catch(done)})
+		
+		// it('06 - Should support ...', done => { co(function *(){
+		// 	const ymlPath = join(__dirname, './data/serverless_04.yml')
+		// 	let cfg = new Config({ path:ymlPath, stage:'dev' })
+		// 	let config = yield cfg.config()
+		// 	console.log(config)
+		// 	done()
+		// }).catch(done)})
 	})
 	describe('#Config.env()', () => {
 		it('01 - Should get all environment variables from the YAML file.', done => { co(function *(){

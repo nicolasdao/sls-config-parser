@@ -1,0 +1,49 @@
+stages:
+  prod:
+    cfStacks:
+      VPC: dehwk-d0dewd-vpc3
+      ingest: data-ingest-v0
+    domain: prod.mrmagic.org
+    certdomain: prod.mrmagic.org
+    LogRetentionInDays: 14
+    run-timeout: 30
+    debug: false
+    alerting: true
+    coolio:
+      filter:
+        GA-app-id:
+          - ga_coolio_dm_live
+          - prefix: TWA_1100001086.5497
+      prefix: coolio
+    slack:
+      verification_token: "uKQsnH3OyRGHutOIp79fWC9k"
+      client_id: "428507108418.721979579638"
+      client_secret: "aa4c20477eb211875c7c2c3cb29b94de"
+    auth:
+      endpoint: 'https://example.com'
+      admin_user: 'coolio@ops.mrmagic.ork'
+      admin_pwd: 'dewdewdewdewdfewfdewfew'
+  dev:
+    cfStacks:
+      VPC: ret-vpc-v1
+      ingest: data-ingest-v0
+    domain: dev.mrmagic.org
+    certdomain: dev.mrmagic.org
+    LogRetentionInDays: 3
+    run-timeout: 30
+    debug: true
+    alerting: false
+    coolio:
+      filter:
+        GA-app-id:
+          - ga_coolio_dm_dev
+          - prefix: DWHUIDGKUWDJKWGDK
+      prefix: coolio
+    slack:
+      verification_token: "GEUWGJWJGDJHWGDJHGWJHG"
+      client_id: "HUHKKJHKJHKJGJKGJKGJKGKJ"
+      client_secret: "cewcewfewfewfewfewfewfew"
+    auth:
+      endpoint: 'https://example.com'
+      admin_user: 'admin'
+      admin_pwd: 'dwqdwqdwqdqqwdwqdqdwq'
