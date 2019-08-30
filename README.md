@@ -7,7 +7,9 @@ __*sls-config-parser*__ parses serverless.yml files so that its values can be us
 }
 ```
 
-This script sets up the environment variables ccc based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
+This script sets up the environment variables based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
+
+> IMPORTANT: [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`)
 
 > WARNING: The package is in beta. Limitations:
 >	- Not tested on Windows.
@@ -23,6 +25,10 @@ This script sets up the environment variables ccc based on the profile defined i
 >	- [Setting up environment variables](#setting-up-environment-variables)
 >		- [Why is it important?](#why-is-it-important)
 >		- [Setting things up](#setting-things-up)
+> * [Gotchas](#gotchas)
+>	- [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`)
+> * [Annexes](#annexes)
+>	- [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api)
 > * [About Neap](#this-is-what-we-re-up-to)
 > * [License](#license)
 
@@ -194,6 +200,8 @@ However, this is far from being flexible. Besides, there might be more environme
 
 ### Setting things up
 
+> PREREQUISITE: The following assumes that you have a `~/.aws/credentials` and a `~/.aws/config` file properly configured (i.e., the profile defined in the `serverless.yml` under the `provider.profile` property exists).
+
 To set up all the environment variables in your local environment, add a script in your package.json similar to this:
 
 ```js
@@ -202,7 +210,31 @@ To set up all the environment variables in your local environment, add a script 
 }
 ```
 
-> The above assumes that you have a `~/.aws/credentials` and a `~/.aws/config` file properly configured (i.e., the profile defined in the `serverless.yml` under the `provider.profile` property exists).
+> To know more about this script's API, please refer to the [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api) section of the [Annexes](#annexes).
+
+Unfortunately, [you have to rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`) in your code.
+
+Instead of doing this:
+
+```js
+const AWS = require('aws-sdk')
+const db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+```
+
+Do this:
+
+```js
+let _db
+const getDB = () => {
+	if (!db) {
+		const AWS = require('aws-sdk')
+		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+	}
+	return _db
+}
+```
+
+To know more about this gotchas, please refer to [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`) section of the [Gotchas](#gotchas).
 
 To run your Lambda locally, just run:
 
@@ -210,7 +242,81 @@ To run your Lambda locally, just run:
 npm run dev
 ```
 
-> Explanation: The `-r` options means _require_. This requires the JS file located under the path `sls-config-parser/setenv.js`. This file executes a function which takes the options `--inclcreds` and `--stage dev` and sets up the environment variables defined in the `serverless.yml` and in the `~/.aws/credentials` and a `~/.aws/config` files. Once this is done, the `index.js` file is executed. 
+# Gotchas
+## You should probably rewrite how you `require('aws-sdk')`
+
+When `node -r sls-config-parser/setenv index.js --inclcreds --stage prod` is executed, it asynchronously sets up the environment variables (what `-r sls-config-parser/setenv` simply means require the module `sls-config-parser/setenv.js`). This means that the other modules required in the `index.js` might load before environment variables are set. This means that this snippet could faild to load the AWS credentials:
+
+```js
+const AWS = require('aws-sdk')
+const db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+```
+
+To fix this, you should lazy load your code so that the first set up happens only when the server has been long running and all the variables have been set up:
+
+```js
+let _db
+const getDB = () => {
+	if (!db) {
+		const AWS = require('aws-sdk')
+		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+	}
+	return _db
+}
+```
+
+If putting the `const AWS = require('aws-sdk')` inside that function is an issue, you can also do this:
+
+```js
+const AWS = require('aws-sdk')
+
+let _db
+const getDB = () => {
+	if (!db) {
+		AWS.config = new AWS.Config({ 
+			accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
+			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
+			region: process.env.AWS_REGION
+		})
+		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+	}
+	return _db
+}
+```
+
+Finally, if you want to make sure the enviroment variables have been set up before configuring the SDK, you could also add a check:
+
+
+```js
+const AWS = require('aws-sdk')
+
+let _db
+const getDB = () => {
+	if (!db) {
+		if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.AWS_REGION)
+			throw new Error(`AWS credentials have not been set.`)
+		
+		AWS.config = new AWS.Config({ 
+			accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
+			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
+			region: process.env.AWS_REGION
+		})
+		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
+	}
+	return _db
+}
+```
+
+# Annexes
+## `sls-config-parser/setenv` API
+
+```js
+"scripts": {
+	"dev": "node -r sls-config-parser/setenv index.js --inclcreds --stage dev"
+}
+```
+
+The `-r` options means _require_. This requires the JS file located under the path `sls-config-parser/setenv.js`. This file executes a function which takes the options `--inclcreds` and `--stage dev` and sets up the environment variables defined in the `serverless.yml` and in the `~/.aws/credentials` and a `~/.aws/config` files. Once this is done, the `index.js` file is executed. 
 
 The options for the `sls-config-parser/setenv.js` function are:
 - __`--inclcreds`__: If specified, this means the environment variables defined in the `~/.aws/credentials` file and in the `~/.aws/config` file must be set up. Otherwise, only the variables of the `serverless.yml` are included.
