@@ -26,7 +26,7 @@ This script sets up the environment variables based on the profile defined in th
 >		- [Why is it important?](#why-is-it-important)
 >		- [Setting things up](#setting-things-up)
 > * [Gotchas](#gotchas)
->	- [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`)
+>	- [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
 > * [Annexes](#annexes)
 >	- [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api)
 > * [About Neap](#this-is-what-we-re-up-to)
@@ -212,7 +212,7 @@ To set up all the environment variables in your local environment, add a script 
 
 > To know more about this script's API, please refer to the [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api) section of the [Annexes](#annexes).
 
-Unfortunately, [you have to rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`) in your code.
+Unfortunately, [you have to rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk) in your code.
 
 Instead of doing this:
 
@@ -234,7 +234,7 @@ const getDB = () => {
 }
 ```
 
-To know more about this gotchas, please refer to [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`) section of the [Gotchas](#gotchas).
+To know more about this gotchas, please refer to [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk) section of the [Gotchas](#gotchas).
 
 To run your Lambda locally, just run:
 
