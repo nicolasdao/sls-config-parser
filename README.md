@@ -245,7 +245,7 @@ npm run dev
 # Gotchas
 ## You should probably rewrite how you `require('aws-sdk')`
 
-When `node -r sls-config-parser/setenv index.js --inclcreds --stage prod` is executed, it asynchronously sets up the environment variables (what `-r sls-config-parser/setenv` simply means require the module `sls-config-parser/setenv.js`). This means that the other modules required in the `index.js` might load before environment variables are set. This means that this snippet could faild to load the AWS credentials:
+When `node -r sls-config-parser/setenv index.js --inclcreds --stage prod` is executed, it asynchronously sets up the environment variables (`-r sls-config-parser/setenv` simply means require the module `sls-config-parser/setenv.js`). This means that the other modules required in the `index.js` might load before environment variables are set. This means that this snippet could faild to load the AWS credentials:
 
 ```js
 const AWS = require('aws-sdk')
