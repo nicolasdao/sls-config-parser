@@ -9,7 +9,7 @@ __*sls-config-parser*__ parses serverless.yml files so that its values can be us
 
 This script sets up the environment variables based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
 
-> IMPORTANT: [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk`)
+> IMPORTANT: [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
 
 > WARNING: The package is in beta. Limitations:
 >	- Not tested on Windows.
