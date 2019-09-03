@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.8...v0.1.0) (2019-09-03)
+
+
+### Features
+
+* Add support for overiding the serverless.yml ([9c4686a](https://github.com/nicolasdao/sls-config-parser/commit/9c4686a))
+
+
+
 ### [0.0.8](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.7...v0.0.8) (2019-08-27)
 
 
