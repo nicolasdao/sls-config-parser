@@ -35,7 +35,7 @@
 	const _force = _getOptionValue('force')
 	const ymlPath = process.argv.indexOf('--path') >= 0 ? _getFullPath(process.argv[process.argv.indexOf('--path')+1]) : null
 
-	const cfg = Config({ _path:ymlPath, _force, stage, profile })
+	const cfg = Config({ _path:ymlPath, _force, stage })
 
 	return cfg.setEnv({ inclAccessCreds:inclCreds })
 })()
