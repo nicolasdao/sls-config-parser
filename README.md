@@ -20,15 +20,16 @@ This script sets up the environment variables based on the profile defined in th
 
 > * [Install](#install) 
 > * [Getting started](#getting-started) 
->	- [Parsing the serverless.yml](#parsing-the-serverlessyml)
->	- [Getting the environment variables](#getting-the-environment-variables)
->	- [Setting up environment variables](#setting-up-environment-variables)
->		- [Why is it important?](#why-is-it-important)
->		- [Setting things up](#setting-things-up)
+>	  - [Parsing the serverless.yml](#parsing-the-serverlessyml)
+>	  - [Getting the environment variables](#getting-the-environment-variables)
+>	  - [Setting up environment variables](#setting-up-environment-variables)
+>      - [Why is it important?](#why-is-it-important)
+>		   - [Setting things up](#setting-things-up)
+>   - [Overriding serverless.yml properties](#overriding-serverlessyml-properties)
 > * [Gotchas](#gotchas)
->	- [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
+>	  - [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
 > * [Annexes](#annexes)
->	- [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api)
+>	  - [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api)
 > * [About Neap](#this-is-what-we-re-up-to)
 > * [License](#license)
 
@@ -240,6 +241,16 @@ To run your Lambda locally, just run:
 
 ```
 npm run dev
+```
+
+# Overriding serverless.yml properties
+
+Sometimes you may need to overide some serverless.yml properties in your package.json scripts (e.g., you wish to set up a specific provider's profile without setting one up in the serverless.yml file). You can achieve this with the `--force` option as follow:
+
+```js
+"scripts": {
+  "start": "node -r sls-config-parser/setenv index.js --inclcreds --stage prod --force 'provider.profile=neap;provider.region=ap-southeast-2'"
+}
 ```
 
 # Gotchas

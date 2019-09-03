@@ -25,13 +25,19 @@
 			return p
 	}
 
+	const _getOptionValue = option => {
+		const idx = process.argv.indexOf(`--${option}`)
+		return idx >= 0 ? process.argv[idx+1] : null
+	}
+
 	const inclCreds = process.argv.indexOf('--inclcreds') >= 0
-	const stage = process.argv.indexOf('--stage') >= 0 ? process.argv[process.argv.indexOf('--stage')+1] : null
+	const stage = _getOptionValue('stage')
+	const _force = _getOptionValue('force')
 	const ymlPath = process.argv.indexOf('--path') >= 0 ? _getFullPath(process.argv[process.argv.indexOf('--path')+1]) : null
 
-	const cfg = Config(ymlPath, { stage })
+	const cfg = Config({ _path:ymlPath, _force, stage, profile })
 
-	cfg.setEnv({ inclAccessCreds:inclCreds })
+	return cfg.setEnv({ inclAccessCreds:inclCreds })
 })()
 
 

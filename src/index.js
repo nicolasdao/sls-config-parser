@@ -420,13 +420,15 @@ const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(f
  *  
  * @param {String}	ymlPath						Absolute path to the serverless.yml file.
  * @param {Object}	options						Token values (e.g., { stage: 'prod' }) 
+ * @param {Object}	options._force				Overwrites some properties of the returned concrete JSON config file.
+ *                                   			(e.g., { provider: { profile:'blabla' } })
  * @param {Number}	options.__parseRecCount		Reserved keyword. Contains the number of '_parse' recursions. 
  *                                         		It helps throwing exceptions when infinite loops are detected (i.e., 
  *                                         	 	value > 100).
  * @param {Number}	options.__replTokensCount	Reserved keyword. Contains the number of '_replaceTokens' recursions. 
  *                                         	 	It helps throwing exceptions when infinite loops are detected (i.e., 
  *                                         	  	value > 100). 
- * @yield {[type]} [description]
+ * @yield {Object}
  */
 const _parse = (ymlPath, options) => co(function *() {
 	options = options || {}
@@ -454,7 +456,12 @@ const _parse = (ymlPath, options) => co(function *() {
 
 	const config = _parseYmlToJson(ymlPrefilled, ymlPath)
 
-	return yield _replaceTokens(config, rootFolder, options)
+	let serverlessJson =  yield _replaceTokens(config, rootFolder, Object.assign({}, options, { _force:null }))
+
+	if (options._force && typeof(options._force) == 'object')
+		serverlessJson = objHelp.merge(serverlessJson, options._force)
+
+	return serverlessJson
 }).catch(err => {
 	if (err && err.code == 1)
 		throw err
@@ -534,7 +541,8 @@ const _getEnv = (config, options) => co(function *(){
 		const profile = (config.provider || {}).profile
 		const awsDir = options.awsDir
 		const accessCreds = yield _getAccessCreds({ profile, awsDir }) || {}
-		globalEnv = { ...globalEnv, ...accessCreds }
+		const region = config.provider && config.provider.region ? { AWS_REGION:config.provider.region } : {}
+		globalEnv = { ...globalEnv, ...accessCreds, ...region }
 	}
 
 	return Object.keys(functions).reduce((acc,fname) => {
@@ -546,14 +554,39 @@ const _getEnv = (config, options) => co(function *(){
 	throw new Error(err.stack)
 })
 
+const _getForceObj = force => {
+	if (!force)
+		return null
+
+	const t = typeof(force)
+	if (t == 'object')
+		return force 
+	else if (t != 'string')
+		throw new Error(`Wrong argument exception. 'force' must be an object or a string (current: ${t}).`)
+
+	return force.split(';').reduce((acc, exp) => {
+		let [prop,...value] = (exp||'').split('=')
+		if (!prop || !value.length)
+			throw new Error(`Wrong argument exception. Expression '${exp}' in the force attribute is invalid.`)
+
+		prop = prop.trim()
+		value = value.join('=').replace(/^['"]|['"]$/g,'')
+		return objHelp.set(acc, prop, value)
+	}, {})
+}
+
 /**
  * [Config description]
- * @param {String} options.path		Default is the 'serverless.yml' path in the current working directory.
- * @param {String} options.anyOptionYouWant
+ * @param {String} params._path				'_path' is a reserved property. Default is the 'serverless.yml' path in the current working directory.
+ * @param {String} params._force			'_force' is a reserved property.
+ * @param {String} params.anyOptionYouWant
  */
-const Config = function (options) {
-	let { path:ymlPath } = options || {}
+const Config = function (params) {
+	let { _path:ymlPath, _force } = params || {}
 	ymlPath = ymlPath || join(process.cwd(), 'serverless.yml')
+
+	const force = _getForceObj(_force)
+	const options = Object.assign(JSON.parse(JSON.stringify(params)), { _force:force })
 	let config
 
 	this.config = () => co(function *(){
