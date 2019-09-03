@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.0...v0.1.1) (2019-09-03)
+
+
+### Bug Fixes
+
+* 'profile' is not defined ([ebf34ed](https://github.com/nicolasdao/sls-config-parser/commit/ebf34ed))
+
+
+
 ## [0.1.0](https://github.com/nicolasdao/sls-config-parser/compare/v0.0.8...v0.1.0) (2019-09-03)
 
 
