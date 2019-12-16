@@ -254,7 +254,7 @@ describe('index', () => {
 			done()
 		}).catch(done)})
 
-		it('06 - Should support overiding the serverless file.', done => { co(function *(){
+		it('06 - Should support overriding the serverless file.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_03.yml')
 			let cfg = new Config({ _path:ymlPath, stage:'prod', _force:'provider.profile=neap' })
 			let config = yield cfg.config()
@@ -371,13 +371,21 @@ describe('index', () => {
 			assert.equal(env.find(({ name }) => name == 'AWS_REGION').value, 'ap-southeast-2', '09')
 			done()
 		}).catch(done)})
-		it('07 - Should support overiding the AWS_REGION environment variable using the \'_force\' option.', done => { co(function *(){
+		it('07 - Should support overriding the AWS_REGION environment variable using the \'_force\' option.', done => { co(function *(){
 			const ymlPath = join(__dirname, './data/serverless_02.yml')
 			const cfg = new Config({ _path:ymlPath, _force: 'provider.region=hello' })
 			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
 			assert.equal(env.find(({ name }) => name == 'AWS_ACCESS_KEY_ID').value, 'JWUIBJKBUWGGJGJUGUJG', '07')
 			assert.equal(env.find(({ name }) => name == 'AWS_SECRET_ACCESS_KEY').value, 'dhejkwhdiuewhdjkhdegwfugewf', '08')
 			assert.equal(env.find(({ name }) => name == 'AWS_REGION').value, 'hello', '09')
+			done()
+		}).catch(done)})
+		it('08 - Should support overriding environment variables that rely on custom variable that have been forced with the \'_force\' option.', done => { co(function *(){
+			const ymlPath = join(__dirname, './data/serverless_05.yml')
+			const customUrl = 'http://super.com'
+			const cfg = new Config({ _path:ymlPath, _force: `custom.messageUrl.dev=${customUrl}` })
+			const env = yield cfg.env()
+			assert.equal(env.MSG_URL, customUrl, '01')
 			done()
 		}).catch(done)})
 	})

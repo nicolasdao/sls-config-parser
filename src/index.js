@@ -434,6 +434,7 @@ const _parse = (ymlPath, options) => co(function *() {
 	options = options || {}
 	options.__parseRecCount = options.__parseRecCount || 0
 	options.__parseRecCount++
+	const forceOn = options._force && typeof(options._force) == 'object'
 
 	if (options.__parseRecCount > 100) {
 		let e = new Error(`Failed to parse file ${ymlPath}. Infinite loop detected. This can be due to variables or file referencing each other.`)
@@ -454,11 +455,14 @@ const _parse = (ymlPath, options) => co(function *() {
 	// Replace all the '${sls:instanceId}' references.
 	const ymlPrefilled = ymlContent.toString().replace(/\$\{sls:\s*instanceId\s*\}/g, () => crypto.randomBytes(16).toString('hex'))
 
-	const config = _parseYmlToJson(ymlPrefilled, ymlPath)
+	let config = _parseYmlToJson(ymlPrefilled, ymlPath)
+
+	if (forceOn)
+		config = objHelp.merge(config, options._force)
 
 	let serverlessJson =  yield _replaceTokens(config, rootFolder, Object.assign({}, options, { _force:null }))
 
-	if (options._force && typeof(options._force) == 'object')
+	if (forceOn)
 		serverlessJson = objHelp.merge(serverlessJson, options._force)
 
 	return serverlessJson
