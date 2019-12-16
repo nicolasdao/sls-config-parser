@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.3](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.2...v0.1.3) (2019-12-16)
+
+
+### Bug Fixes
+
+* 4 of 4 vulnerabilities in 1348 scanned packages ([17f498e](https://github.com/nicolasdao/sls-config-parser/commit/17f498e))
+* Forcing some variables don't cascade down to some dynamic variables that depend on them ([b80dabd](https://github.com/nicolasdao/sls-config-parser/commit/b80dabd))
+
+
+
 ### [0.1.2](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.1...v0.1.2) (2019-10-15)
 
 
