@@ -129,7 +129,7 @@ resources:
 ```js
 const { Config } = require('sls-config-parser')
 
-const cfg = new Config()
+const defaultCfg = new Config()
 
 // EXAMPLE 01: Returns an object with all the environment variables (both global and local to all functions).
 // For example: env.DATA_01 -> 'hello dev', env.GRAPHQL_ENV_01 -> 'graphql_01', env.REST_ENV_01 -> 'rest_01'
