@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.3...v1.0.0) (2020-03-03)
+
+
+### Features
+
+* Make the entire lib synchronous ([aafeb4d](https://github.com/nicolasdao/sls-config-parser/commit/aafeb4d))
+
+
+
 ### [0.1.3](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.2...v0.1.3) (2019-12-16)
 
 
