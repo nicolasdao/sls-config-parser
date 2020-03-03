@@ -9,8 +9,6 @@ __*sls-config-parser*__ parses serverless.yml files so that its values can be us
 
 This script sets up the environment variables based on the profile defined in the `serverless.yml` file and the credentials defined in the `~/.aws/credentials` and `~/.aws/config` the file.
 
-> IMPORTANT: [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
-
 > WARNING: The package is in beta. Limitations:
 >	- Not tested on Windows.
 >	- Only works with YAML files (JSON support coming soon).
@@ -26,8 +24,6 @@ This script sets up the environment variables based on the profile defined in th
 >		- [Why is it important?](#why-is-it-important)
 >		- [Setting things up](#setting-things-up)
 >	- [Overriding serverless.yml properties](#overriding-serverlessyml-properties)
-> * [Gotchas](#gotchas)
->	  - [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk)
 > * [Annexes](#annexes)
 >	  - [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api)
 > * [About Neap](#this-is-what-we-re-up-to)
@@ -55,10 +51,17 @@ const stagingCfg = new Config({ stage: 'staging' })
 const prodCfg = new Config({ stage: 'prod' })
 const customCfg = new Config({ stage: 'prod', path:'../path-to-another-config/some-other.yml' })
 
-defaultCfg.config().then(serverlessConfig => { console.log('STAGING CONFIG:'); console.log(serverlessConfig) })
-stagingCfg.config().then(serverlessConfig => { console.log('STAGING CONFIG:'); console.log(serverlessConfig) })
-prodCfg.config().then(serverlessConfig => { console.log('PROD CONFIG:'); console.log(serverlessConfig) })
-customCfg.config().then(serverlessConfig => { console.log('CUSTOM CONFIG:'); console.log(serverlessConfig) })
+console.log('DEFAULT CONFIG:')
+console.log(defaultCfg.config())
+
+console.log('STAGING CONFIG:')
+console.log(stagingCfg.config())
+
+console.log('PROD CONFIG:')
+console.log(prodCfg.config())
+
+console.log('CUSTOM CONFIG:')
+console.log(customCfg.config())
 ```
 
 ## Getting the environment variables
@@ -133,30 +136,30 @@ const defaultCfg = new Config()
 
 // EXAMPLE 01: Returns an object with all the environment variables (both global and local to all functions).
 // For example: env.DATA_01 -> 'hello dev', env.GRAPHQL_ENV_01 -> 'graphql_01', env.REST_ENV_01 -> 'rest_01'
-defaultCfg.env().then(env => console.log(env)) 
+console.log(defaultCfg.env())
 
 // EXAMPLE 02: Returns the same data as above, but as an array rather than an object.
 // For example: [{ name: 'DATA_01', value: 'hello dev' }, { name:'GRAPHQL_ENV_01', value: 'graphql_01' }, ...]
-defaultCfg.env({ format:'array' }).then(env => console.log(env)) 
+console.log(defaultCfg.env({ format:'array' }))
 
 // EXAMPLE 03: Returns the same data as #01, but only focus on the global variables and the 'graphql' function variables.
-defaultCfg.env({ functions:['graphql'] }).then(env => console.log(env)) 
+console.log(defaultCfg.env({ functions:['graphql'] }))
 
 // EXAMPLE 04: Returns the same data as #03, but ignore the global variables.
-defaultCfg.env({ functions:['graphql'], ignoreGlobal:true }).then(env => console.log(env)) 
+console.log(defaultCfg.env({ functions:['graphql'], ignoreGlobal:true }))
 
 // EXAMPLE 05: Returns the global variables only.
-defaultCfg.env({ ignoreFunctions:true }).then(env => console.log(env)) 
+console.log(defaultCfg.env({ ignoreFunctions:true }))
 
 // EXAMPLE 06: Returns the same data as #01 with the additionnal AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY defined
 // in the ~/.aws/credentials file. If there are multiple profiles in the credentials file, sls-config-parser uses the
 // profile defined under the provider.profile property in the serverless.yml file (in our case, that profile is called 
 // 'fairplay').
 // For example: env.AWS_ACCESS_KEY_ID -> 'SHWKHSKWHKHKWSW', env.AWS_SECRET_ACCESS_KEY -> 'dbwjdejewgdewdjjgjewdgewdg'
-defaultCfg.env({ inclAccessCreds:true }).then(env => console.log(env)) 
+console.log(defaultCfg.env({ inclAccessCreds:true }))
 
 // EXAMPLE 07: Same as #06, but with a custom credentials file.
-defaultCfg.env({ inclAccessCreds:true, awsCreds:'../path-to-other-creds/other-creds-file' }).then(env => console.log(env)) 
+ console.log(defaultCfg.env({ inclAccessCreds:true, awsCreds:'../path-to-other-creds/other-creds-file' }))
 ```
 
 ## Setting up environment variables
@@ -213,30 +216,6 @@ To set up all the environment variables in your local environment, add a script 
 
 > To know more about this script's API, please refer to the [`sls-config-parser/setenv` API](#sls-config-parsersetenv-api) section of the [Annexes](#annexes).
 
-Unfortunately, [you have to rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk) in your code.
-
-Instead of doing this:
-
-```js
-const AWS = require('aws-sdk')
-const db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-```
-
-Do this:
-
-```js
-let _db
-const getDB = () => {
-	if (!db) {
-		const AWS = require('aws-sdk')
-		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-	}
-	return _db
-}
-```
-
-To know more about this gotchas, please refer to [You should probably rewrite how you `require('aws-sdk')`](#you-should-probably-rewrite-how-you-requireaws-sdk) section of the [Gotchas](#gotchas).
-
 To run your Lambda locally, just run:
 
 ```
@@ -250,71 +229,6 @@ Sometimes you may need to overide some serverless.yml properties in your package
 ```js
 "scripts": {
   "start": "node -r sls-config-parser/setenv index.js --inclcreds --stage prod --force 'provider.profile=neap;provider.region=ap-southeast-2'"
-}
-```
-
-# Gotchas
-## You should probably rewrite how you `require('aws-sdk')`
-
-When `node -r sls-config-parser/setenv index.js --inclcreds --stage prod` is executed, it asynchronously sets up the environment variables (`-r sls-config-parser/setenv` simply means require the module `sls-config-parser/setenv.js`). This means that the other modules required in the `index.js` might load before environment variables are set. This means that this snippet could faild to load the AWS credentials:
-
-```js
-const AWS = require('aws-sdk')
-const db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-```
-
-To fix this, you should lazy load your code so that the first set up happens only when the server has been long running and all the variables have been set up:
-
-```js
-let _db
-const getDB = () => {
-	if (!db) {
-		const AWS = require('aws-sdk')
-		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-	}
-	return _db
-}
-```
-
-If putting the `const AWS = require('aws-sdk')` inside that function is an issue, you can also do this:
-
-```js
-const AWS = require('aws-sdk')
-
-let _db
-const getDB = () => {
-	if (!db) {
-		AWS.config = new AWS.Config({ 
-			accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
-			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
-			region: process.env.AWS_REGION
-		})
-		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-	}
-	return _db
-}
-```
-
-Finally, if you want to make sure the enviroment variables have been set up before configuring the SDK, you could also add a check:
-
-
-```js
-const AWS = require('aws-sdk')
-
-let _db
-const getDB = () => {
-	if (!db) {
-		if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.AWS_REGION)
-			throw new Error(`AWS credentials have not been set.`)
-		
-		AWS.config = new AWS.Config({ 
-			accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
-			secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
-			region: process.env.AWS_REGION
-		})
-		_db = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'})
-	}
-	return _db
 }
 ```
 
