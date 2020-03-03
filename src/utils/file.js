@@ -15,7 +15,12 @@ const fs = require('fs')
  * @param  {String}  filePath 	Absolute path to file or folder on the local machine
  * @return {Boolean}   
  */
-const fileExists = filePath => new Promise(onSuccess => fs.exists(filePath, yes => onSuccess(yes ? true : false)))
+const fileExists = (filePath, options) => {
+	if (options && options.sync)
+		return fs.existsSync(filePath)
+
+	return new Promise(onSuccess => fs.exists(filePath, yes => onSuccess(yes ? true : false)))
+}
 
 /**
  * Gets a file under a Google Cloud Storage's 'filePath'.
@@ -23,7 +28,12 @@ const fileExists = filePath => new Promise(onSuccess => fs.exists(filePath, yes 
  * @param  {String}  filePath 	Absolute file path on the local machine
  * @return {Buffer}
  */
-const readFile = filePath => new Promise((onSuccess, onFailure) => fs.readFile(filePath, (err, data) => err ? onFailure(err) : onSuccess(data)))
+const readFile = (filePath, options) => {
+	if (options && options.sync)
+		return fs.readFileSync(filePath)
+
+	return new Promise((onSuccess, onFailure) => fs.readFile(filePath, (err, data) => err ? onFailure(err) : onSuccess(data)))
+}
 
 module.exports = {
 	exists: fileExists,

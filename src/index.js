@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
 */
 
-const co = require('co')
 const YAML = require('yamljs')
 const { homedir } = require('os')
 const { join, dirname } = require('path')
@@ -268,38 +267,40 @@ const _getExplicitTokenRefs = (config, ancestors) => {
  *                                         	  	value > 100). 
  * @param {[String]} options.__jobKeys          Set of unique IDs that uniquely identify a _replaceTokens job. If that 
  *                                              job has already been required, then skip to prevent infinite loops.
- * @yield {[type]} [description]
+ * @return {[type]} [description]
  */
-const _replaceTokens = (config, rootFolder, options) => co(function *(){
-	options = options || {}
-	options.__replTokensCount = options.__replTokensCount || 0
-	options.__jobKeys = options.__jobKeys || []
-	options.__replTokensCount++
+const _replaceTokens = (config, rootFolder, options) => {
+	try {
+		options = options || {}
+		options.__replTokensCount = options.__replTokensCount || 0
+		options.__jobKeys = options.__jobKeys || []
+		options.__replTokensCount++
 
-	if (options.__replTokensCount > 100) {
-		let e = new Error('Failed to replace tokens. Infinite loop detected. This can be due to variables or file referencing each other.')
-		e.code = 1
-		throw e
-	}
+		if (options.__replTokensCount > 100) {
+			let e = new Error('Failed to replace tokens. Infinite loop detected. This can be due to variables or file referencing each other.')
+			e.code = 1
+			throw e
+		}
 
-	const explicitTokenRefs = _getExplicitTokenRefs(config) || []
-	if (!explicitTokenRefs.length)
-		return config
-	else {
-		const jobKey = collection.sortBy(explicitTokenRefs.map(({ dotPath, raw }) => `${dotPath}-${typeof(raw) == 'string' ? raw : JSON.stringify(raw)}`)).join('_')
-		if (options.__jobKeys.indexOf(jobKey) >= 0) 
+		const explicitTokenRefs = _getExplicitTokenRefs(config) || []
+		if (!explicitTokenRefs.length)
 			return config
+		else {
+			const jobKey = collection.sortBy(explicitTokenRefs.map(({ dotPath, raw }) => `${dotPath}-${typeof(raw) == 'string' ? raw : JSON.stringify(raw)}`)).join('_')
+			if (options.__jobKeys.indexOf(jobKey) >= 0) 
+				return config
 
-		options.__jobKeys.push(jobKey)
-		const updatedConfig  = yield _injectTokens(config, explicitTokenRefs, rootFolder, options)
-		return _replaceTokens(updatedConfig, rootFolder, options)
+			options.__jobKeys.push(jobKey)
+			const updatedConfig  = _injectTokens(config, explicitTokenRefs, rootFolder, options)
+			return _replaceTokens(updatedConfig, rootFolder, options)
+		}
+	} catch (err) {
+		if (err && err.code == 1)
+			throw err
+		else
+			throw new Error(err.stack)
 	}
-}).catch(err => {
-	if (err && err.code == 1)
-		throw err
-	else
-		throw new Error(err.stack)
-})
+}
 
 /**
  * Determines whether an pbject's path is resolved or not
@@ -334,7 +335,7 @@ const _isPathResolved = (obj,prop) => {
 	return resp === undefined ? true : resp
 }
 
-const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }) => co(function *() {
+const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }) => {
 	const { raw='', ref, dotPath='' } = tokenRef	// e.g., p: [ 'resources', 'Resources', 'UserTable', 'Properties', 'TableName' ], raw: 'user_${opt:custom.stage}'
 	const { type='', value } = ref || {}		// e.g., type: 'opt', value:'prod'
 	const defaultValue = ref[type].alt		// e.g., 'dev'
@@ -368,13 +369,13 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }
 			else { // else try to find the self's in the 'tokenRefs' to resolve it.
 				const selfTokenRef = tokenRefs.find(({ dotPath:dp }) => dp == ref.self.dotPath)
 				if (selfTokenRef) 
-					yield _resolveTokenRef({ config, tokenRef:selfTokenRef, tokenRefs, optTokens, rootFolder })
+					_resolveTokenRef({ config, tokenRef:selfTokenRef, tokenRefs, optTokens, rootFolder })
 			}
 		} else if (type == 'file') {
 			const externalConfigPath = join(rootFolder, ref.file.path[0])
 			const [, ...props] = ref.file.path
 			const propsPath = props.join('.')
-			const externalConfig = yield _parse(externalConfigPath, optTokens)
+			const externalConfig = _parse(externalConfigPath, optTokens)
 			if (!externalConfig)
 				throw new Error(`'file' with path ${externalConfigPath} located under ${dotPath} is empty.`)
 
@@ -393,16 +394,14 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }
 		// 3. Mutate the 'tokenRef' value to save time for next iteration
 		tokenRef.ref.value = resolvedValue
 	}
-}).catch(err => {
-	throw new Error(err.stack)
-})
+}
 
-const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(function *(){
+const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => {
 	optTokens = optTokens || {}
 	explicitTokenRefs = explicitTokenRefs || []
 	optTokens = optTokens || {}
 
-	yield explicitTokenRefs.map(tokenRef => _resolveTokenRef({
+	explicitTokenRefs.map(tokenRef => _resolveTokenRef({
 		config,
 		tokenRef,
 		tokenRefs: explicitTokenRefs,
@@ -411,9 +410,7 @@ const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(f
 	}))
 
 	return config
-}).catch(err => {
-	throw new Error(err.stack)
-})
+}
 
 /**
  * Parses a tokenized serverless.yml file to a concrete JSON config file where tokens have been replaced.
@@ -428,50 +425,52 @@ const _injectTokens = (config, explicitTokenRefs, rootFolder, optTokens) => co(f
  * @param {Number}	options.__replTokensCount	Reserved keyword. Contains the number of '_replaceTokens' recursions. 
  *                                         	 	It helps throwing exceptions when infinite loops are detected (i.e., 
  *                                         	  	value > 100). 
- * @yield {Object}
+ * @return {Object}
  */
-const _parse = (ymlPath, options) => co(function *() {
-	options = options || {}
-	options.__parseRecCount = options.__parseRecCount || 0
-	options.__parseRecCount++
-	const forceOn = options._force && typeof(options._force) == 'object'
+const _parse = (ymlPath, options) => {
+	try {
+		options = options || {}
+		options.__parseRecCount = options.__parseRecCount || 0
+		options.__parseRecCount++
+		const forceOn = options._force && typeof(options._force) == 'object'
 
-	if (options.__parseRecCount > 100) {
-		let e = new Error(`Failed to parse file ${ymlPath}. Infinite loop detected. This can be due to variables or file referencing each other.`)
-		e.code = 1
-		throw e
+		if (options.__parseRecCount > 100) {
+			let e = new Error(`Failed to parse file ${ymlPath}. Infinite loop detected. This can be due to variables or file referencing each other.`)
+			e.code = 1
+			throw e
+		}
+
+		const fileExists = fileHelp.exists(ymlPath, { sync:true })
+		if (!fileExists)
+			throw new Error(`YAML file ${ymlPath} not found.`)
+
+		const rootFolder = dirname(ymlPath)
+
+		const ymlContent = fileHelp.read(ymlPath, { sync:true })
+		if (!ymlContent || !ymlContent.length)
+			throw new Error(`YAML file ${ymlPath} is empty.`)
+		
+		// Replace all the '${sls:instanceId}' references.
+		const ymlPrefilled = ymlContent.toString().replace(/\$\{sls:\s*instanceId\s*\}/g, () => crypto.randomBytes(16).toString('hex'))
+
+		let config = _parseYmlToJson(ymlPrefilled, ymlPath)
+
+		if (forceOn)
+			config = objHelp.merge(config, options._force)
+
+		let serverlessJson =  _replaceTokens(config, rootFolder, Object.assign({}, options, { _force:null }))
+
+		if (forceOn)
+			serverlessJson = objHelp.merge(serverlessJson, options._force)
+
+		return serverlessJson
+	} catch (err) {
+		if (err && err.code == 1)
+			throw err
+		else
+			throw new Error(err.stack)
 	}
-
-	const fileExists = yield fileHelp.exists(ymlPath)
-	if (!fileExists)
-		throw new Error(`YAML file ${ymlPath} not found.`)
-
-	const rootFolder = dirname(ymlPath)
-
-	const ymlContent = yield fileHelp.read(ymlPath)
-	if (!ymlContent || !ymlContent.length)
-		throw new Error(`YAML file ${ymlPath} is empty.`)
-	
-	// Replace all the '${sls:instanceId}' references.
-	const ymlPrefilled = ymlContent.toString().replace(/\$\{sls:\s*instanceId\s*\}/g, () => crypto.randomBytes(16).toString('hex'))
-
-	let config = _parseYmlToJson(ymlPrefilled, ymlPath)
-
-	if (forceOn)
-		config = objHelp.merge(config, options._force)
-
-	let serverlessJson =  yield _replaceTokens(config, rootFolder, Object.assign({}, options, { _force:null }))
-
-	if (forceOn)
-		serverlessJson = objHelp.merge(serverlessJson, options._force)
-
-	return serverlessJson
-}).catch(err => {
-	if (err && err.code == 1)
-		throw err
-	else
-		throw new Error(err.stack)
-})
+}
 
 /**
  *
@@ -479,19 +478,22 @@ const _parse = (ymlPath, options) => co(function *() {
  * @param {String}	options.profile		Default 'default'
  * @param {String}	options.awsDir		Default '~/.aws/'
  * 
- * @yield {String}	output.AWS_ACCESS_KEY_ID
- * @yield {String}	output.AWS_SECRET_ACCESS_KEY
- * @yield {String}	output.AWS_REGION				Default 'us-east-1'
+ * @return {String}	output.AWS_ACCESS_KEY_ID
+ * @return {String}	output.AWS_SECRET_ACCESS_KEY
+ * @return {String}	output.AWS_REGION				Default 'us-east-1'
  */
-const _getAccessCreds = (options) => co(function *() {
+const _getAccessCreds = options => {
 	const { profile='default', awsDir } = options || {}
 	const awsCreds = join(awsDir || AWS_DIR, 'credentials')
 	const awsConfig = join(awsDir || AWS_DIR, 'config')
-	const fileExists = yield fileHelp.exists(awsCreds)
+	const fileExists = fileHelp.exists(awsCreds, { sync:true })
 	if (!fileExists)
 		throw new Error(`${awsCreds} file not found. Create one and then fill it with your AWS access key and secret.`)
 
-	const [creds, config] = yield [fileHelp.read(awsCreds), fileHelp.exists(awsConfig).then(y => y ? fileHelp.read(awsConfig) : null)]
+	const creds = fileHelp.read(awsCreds, { sync:true })
+	let config = null
+	if (fileHelp.exists(awsConfig, { sync:true }))
+		config = fileHelp.read(awsConfig, { sync:true })
 
 	if (!creds || !creds.length)
 		throw new Error(`${awsCreds} file is empty. Create one and then fill it with your AWS access key and secret.`)
@@ -516,7 +518,7 @@ const _getAccessCreds = (options) => co(function *() {
 		AWS_SECRET_ACCESS_KEY: access_secret.trim(),
 		AWS_REGION: region || 'us-east-1'
 	}
-})
+}
 
 /**
  * Gets all the environment variables defined in the config file (including the functions' specific variables).
@@ -528,9 +530,10 @@ const _getAccessCreds = (options) => co(function *() {
  * @param {Boolean}		options.inclAccessCreds		Default false. If true, then, based on the 'config.provider.profile'.
  *                                            		(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
  * @param {String}		options.awsDir				Default '~/.aws/'
- * @yield {Object}		output
+ * 
+ * @return {Object}		output
  */
-const _getEnv = (config, options) => co(function *(){
+const _getEnv = (config, options) => {
 	config = config || {}
 	options = options || {}
 	const { functions:functionNames, inclAccessCreds, ignoreFunctions, ignoreGlobal } = options
@@ -544,7 +547,7 @@ const _getEnv = (config, options) => co(function *(){
 	if (inclAccessCreds) {
 		const profile = (config.provider || {}).profile
 		const awsDir = options.awsDir
-		const accessCreds = yield _getAccessCreds({ profile, awsDir }) || {}
+		const accessCreds = _getAccessCreds({ profile, awsDir }) || {}
 		const region = config.provider && config.provider.region ? { AWS_REGION:config.provider.region } : {}
 		globalEnv = { ...globalEnv, ...accessCreds, ...region }
 	}
@@ -554,9 +557,7 @@ const _getEnv = (config, options) => co(function *(){
 			acc = { ...acc, ...functions[fname].environment }
 		return acc
 	}, ignoreGlobal ? {} : globalEnv)
-}).catch(err => {
-	throw new Error(err.stack)
-})
+}
 
 const _getForceObj = force => {
 	if (!force)
@@ -593,12 +594,12 @@ const Config = function (params) {
 	const options = Object.assign(JSON.parse(JSON.stringify(params)), { _force:force })
 	let config
 
-	this.config = () => co(function *(){
+	this.config = () => {
 		if (!config)
-			config = yield _parse(ymlPath, options)
+			config = _parse(ymlPath, options)
 
 		return config
-	})
+	}
 
 	/**
 	 * Gets the environment variables from the 'ymlPath' config file.
@@ -613,32 +614,32 @@ const Config = function (params) {
 	 *                                            		 	(default is 'default'), retrieve the values found in the '~/.aws/credentials' file.
 	 * @param {String}		envOptions.awsDir				Default '~/.aws/'
 	 * 
-	 * @yield {Object/Array}  output						Based on the 'options.format', 
+	 * @return {Object/Array}  output						Based on the 'options.format', 
 	 *        													- 'standard': Output is formatted as follow: { VAL1: 'hello', VAL2: 'world' }
 	 *                                     						- 'array': Output is formatted as follow: [{ name:'VAL1', value: 'hello' }, { name: 'VAL2', value: 'world' }]
 	 */
-	const getEnv = envOptions => co(function *() {
+	const getEnv = envOptions => {
 		if (!config)
-			config = yield _parse(ymlPath, options)
+			config = _parse(ymlPath, options)
 		
-		const env = yield _getEnv(config, envOptions) || {}
+		const env = _getEnv(config, envOptions) || {}
 		if (envOptions && envOptions.format == 'array') {
 			return Object.keys(env).map(key => ({ name: key, value: env[key] }))
 		} else
 			return env
-	})
+	}
 	this.env = getEnv
 
-	this.setEnv = envOptions => co(function *() {
+	this.setEnv = envOptions => {
 		envOptions = envOptions || {}
-		const envs = yield getEnv({ ...envOptions, format:'array' })
+		const envs = getEnv({ ...envOptions, format:'array' })
 		if (!envs || !envs.length)
 			return
 
 		envs.forEach(({ name, value }) => {
 			process.env[name] = value
 		})
-	})
+	}
 
 	return this
 }

@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
 */
 
-const co = require('co')
 const { assert } = require('chai')
 const { Config, _:{ getExplicitTokenRefs, getAccessCreds } } = require('../src')
 const { join } = require('path')
@@ -115,97 +114,79 @@ describe('index', () => {
 		})
 	})
 	describe('#_.getAccessCreds', () => {
-		it('01 - Should extract the default keys.', done => {
-			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ awsDir:join(__dirname,'./data/aws_01') })
-				assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
-				assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
-				assert.equal(AWS_REGION, 'us-east-1', '03')
-				done()
-			}).catch(done)
+		it('01 - Should extract the default keys.', () => {
+			const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = getAccessCreds({ awsDir:join(__dirname,'./data/aws_01') })
+			assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
+			assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
+			assert.equal(AWS_REGION, 'us-east-1', '03')
 		})
-		it('02 - Should extract the default keys even for weirdly formatted files.', done => {
-			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ awsDir:join(__dirname,'./data/aws_02') })
-				assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
-				assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
-				assert.equal(AWS_REGION, 'ap-southeast-2', '03')
-				done()
-			}).catch(done)
+		it('02 - Should extract the default keys even for weirdly formatted files.', () => {
+			const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = getAccessCreds({ awsDir:join(__dirname,'./data/aws_02') })
+			assert.equal(AWS_ACCESS_KEY_ID, 'AKBJKGWJKSWKH', '01')
+			assert.equal(AWS_SECRET_ACCESS_KEY, 'cehwdhekw63289yeidqwjeiu23yi', '02')
+			assert.equal(AWS_REGION, 'ap-southeast-2', '03')
 		})
-		it('03 - Should extract the a specific profile\'s keys.', done => {
-			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_03') })
-				assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
-				assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
-				assert.equal(AWS_REGION, 'us-west-2', '03')
-				done()
-			}).catch(done)
+		it('03 - Should extract the a specific profile\'s keys.', () => {
+			const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_03') })
+			assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
+			assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
+			assert.equal(AWS_REGION, 'us-west-2', '03')
 		})
-		it('04 - Should extract the a specific profile\'s keys (weird format file 01).', done => {
-			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_04') })
-				assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
-				assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
-				assert.equal(AWS_REGION, 'us-west-2', '03')
-				done()
-			}).catch(done)
+		it('04 - Should extract the a specific profile\'s keys (weird format file 01).', () => {
+			const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = getAccessCreds({ profile:'supercool', awsDir:join(__dirname,'./data/aws_04') })
+			assert.equal(AWS_ACCESS_KEY_ID, 'SJKWHKSHSKLK', '01')
+			assert.equal(AWS_SECRET_ACCESS_KEY, 'cdjwkhfdkewhuiwykhdkwe', '02')
+			assert.equal(AWS_REGION, 'us-west-2', '03')
 		})
-		it('05 - Should extract the a specific profile\'s keys (weird format file 02).', done => {
-			co(function *(){
-				const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = yield getAccessCreds({ profile:'helloworld', awsDir:join(__dirname,'./data/aws_05') })
-				assert.equal(AWS_ACCESS_KEY_ID, 'JWUIBJKBUWGGJGJUGUJG', '01')
-				assert.equal(AWS_SECRET_ACCESS_KEY, 'dhejkwhdiuewhdjkhdegwfugewf', '02')
-				assert.equal(AWS_REGION, 'us-east-1', '03')
-				done()
-			}).catch(done)
+		it('05 - Should extract the a specific profile\'s keys (weird format file 02).', () => {
+			const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = getAccessCreds({ profile:'helloworld', awsDir:join(__dirname,'./data/aws_05') })
+			assert.equal(AWS_ACCESS_KEY_ID, 'JWUIBJKBUWGGJGJUGUJG', '01')
+			assert.equal(AWS_SECRET_ACCESS_KEY, 'dhejkwhdiuewhdjkhdegwfugewf', '02')
+			assert.equal(AWS_REGION, 'us-east-1', '03')
 		})
 	})
 	describe('#Config.config()', () => {
-		it('01 - Should parse a serverless.yml file to JSON.', done => { co(function *(){
+		it('01 - Should parse a serverless.yml file to JSON.', () => {
 			process.env.FUNC_PREFIX = 'hello'
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath })
-			const config = yield cfg.config()
+			const config = cfg.config()
 			const { service, functions, provider } = config || {}
 			assert.equal(service, 'graphql', '01')
 			assert.equal(functions.graphql.handler, 'handler.handler', '03')
 			assert.equal(functions.graphql.events[0].http.path, '/', '04')
 			assert.equal(functions.graphql.events[0].http.method, 'ANY', '05')
 			assert.equal(provider.funcPrefix, 'func-hello', '06')
-			done()
-		}).catch(done)})
+		})
 
-		it('02 - Should resolve the dynamic variables using the default settings inside the serverless.yml file.', done => { co(function *(){
+		it('02 - Should resolve the dynamic variables using the default settings inside the serverless.yml file.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath, stage:null })
-			const config = yield cfg.config()
+			const config = cfg.config()
 			const { custom, provider, resources } = config || {}
 			assert.equal(custom.stage, 'dev', '01')
 			assert.equal(provider.stage, 'dev', '02')
 			assert.equal(resources.Resources.UserTable.Properties.TableName, 'user_dev', '03')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 1, '04')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 1, '05')
-			done()
-		}).catch(done)})
+		})
 		
-		it('03 - Should resolve the dynamic variables inside the serverless.yml file.', done => { co(function *(){
+		it('03 - Should resolve the dynamic variables inside the serverless.yml file.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath, stage:'prod' })
-			const config = yield cfg.config()
+			const config = cfg.config()
 			const { custom, provider, resources } = config || {}
 			assert.equal(custom.stage, 'prod', '01')
 			assert.equal(provider.stage, 'prod', '02')
 			assert.equal(resources.Resources.UserTable.Properties.TableName, 'user_prod', '03')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 2, '04')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '05')
-			done()
-		}).catch(done)})
+		})
 		
-		it('04 - Should support the \'file\' function (BASIC TEST).', done => { co(function *(){
+		it('04 - Should support the \'file\' function (BASIC TEST).', () => {
 			const ymlPath = join(__dirname, './data/serverless_02.yml')
 			const cfg = new Config({ _path:ymlPath, stage:'prod' })
-			const config = yield cfg.config()
+			const config = cfg.config()
 			const { custom, resources } = config || {}
 			assert.equal(custom.stage, 'prod', '01')
 			assert.equal(custom.config.dev.dynamoDB.ProvisionedThroughput.ReadCapacityUnits, 1, '02')
@@ -217,13 +198,12 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '08')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 2, '09')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
-			done()
-		}).catch(done)})
+		})
 		
-		it('05 - Should support the \'file\' function (INTERMEDIATE TEST WITH NESTED VARIABLES).', done => { co(function *(){
+		it('05 - Should support the \'file\' function (INTERMEDIATE TEST WITH NESTED VARIABLES).', () => {
 			const ymlPath = join(__dirname, './data/serverless_03.yml')
 			let cfg = new Config({ _path:ymlPath, stage:'prod' })
-			let config = yield cfg.config()
+			let config = cfg.config()
 			let { custom, resources, provider } = config || {}
 
 			assert.equal(custom.stage, 'prod', '01-A')
@@ -239,7 +219,7 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
 
 			cfg = new Config({ _path:ymlPath })
-			config = yield cfg.config()
+			config = cfg.config()
 			custom = (config || {}).custom
 			resources = (config || {}).resources
 			assert.equal(custom.stage, 'dev', '11')
@@ -251,13 +231,12 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '17')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 1, '18')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 1, '19')
-			done()
-		}).catch(done)})
+		})
 
-		it('06 - Should support overriding the serverless file.', done => { co(function *(){
+		it('06 - Should support overriding the serverless file.', () => {
 			const ymlPath = join(__dirname, './data/serverless_03.yml')
 			let cfg = new Config({ _path:ymlPath, stage:'prod', _force:'provider.profile=neap' })
-			let config = yield cfg.config()
+			let config = cfg.config()
 			let { custom, resources, provider } = config || {}
 
 			assert.equal(custom.stage, 'prod', '01-A')
@@ -273,7 +252,7 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 2, '10')
 
 			cfg = new Config({ _path:ymlPath, _force:'provider.profile=neap;resources.Resources.UserTable.Properties.TableName=hello' })
-			config = yield cfg.config()
+			config = cfg.config()
 			custom = (config || {}).custom
 			resources = (config || {}).resources
 			provider = (config || {}).provider
@@ -287,9 +266,7 @@ describe('index', () => {
 			assert.equal(resources.Resources.UserTable.Properties.AttributeDefinitions[2].AttributeName, 'data', '17')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.ReadCapacityUnits, 1, '18')
 			assert.equal(resources.Resources.UserTable.Properties.ProvisionedThroughput.WriteCapacityUnits, 1, '19')
-
-			done()
-		}).catch(done)})
+		})
 		
 		// it('06 - Should support ...', done => { co(function *(){
 		// 	const ymlPath = join(__dirname, './data/serverless_04.yml')
@@ -300,58 +277,58 @@ describe('index', () => {
 		// }).catch(done)})
 	})
 	describe('#Config.env()', () => {
-		it('01 - Should get all environment variables from the YAML file.', done => { co(function *(){
+		it('01 - Should get all environment variables from the YAML file.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath })
-			const env = yield cfg.env()
+			const env = cfg.env()
 			assert.equal(env.DATA_01, 'hello dev', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
 			assert.equal(env.GRAPHQL_ENV_01, 'graphql_01', '03')
 			assert.equal(env.GRAPHQL_ENV_02, 'graphql_02', '04')
 			assert.equal(env.REST_ENV_01, 'rest_01', '05')
 			assert.equal(env.REST_ENV_02, 'rest_02', '06')
-			done()
-		}).catch(done)})
-		it('02 - Should support selecting specific functions.', done => { co(function *(){
+		})
+
+		it('02 - Should support selecting specific functions.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath, stage:'prod' })
-			const env = yield cfg.env({ functions:['graphql'] })
+			const env = cfg.env({ functions:['graphql'] })
 			assert.equal(env.DATA_01, 'hello prod', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
 			assert.equal(env.GRAPHQL_ENV_01, 'graphql_01', '03')
 			assert.equal(env.GRAPHQL_ENV_02, 'graphql_02', '04')
 			assert.isNotOk(env.REST_ENV_01, '05')
 			assert.isNotOk(env.REST_ENV_02, '06')
-			done()
-		}).catch(done)})
-		it('03 - Should support focusing on global variables only.', done => { co(function *(){
+		})
+
+		it('03 - Should support focusing on global variables only.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath, stage:'prod' })
-			const env = yield cfg.env({ ignoreFunctions:true })
+			const env = cfg.env({ ignoreFunctions:true })
 			assert.equal(env.DATA_01, 'hello prod', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
 			assert.isNotOk(env.GRAPHQL_ENV_01, '03')
 			assert.isNotOk(env.GRAPHQL_ENV_02, '04')
 			assert.isNotOk(env.REST_ENV_01, '05')
 			assert.isNotOk(env.REST_ENV_02, '06')
-			done()
-		}).catch(done)})
-		it('04 - Should support focusing on functions variables only.', done => { co(function *(){
+		})
+
+		it('04 - Should support focusing on functions variables only.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath })
-			const env = yield cfg.env({ ignoreGlobal:true })
+			const env = cfg.env({ ignoreGlobal:true })
 			assert.isNotOk(env.DATA_01, '01')
 			assert.isNotOk(env.DATA_02, '02')
 			assert.equal(env.GRAPHQL_ENV_01, 'graphql_01', '03')
 			assert.equal(env.GRAPHQL_ENV_02, 'graphql_02', '04')
 			assert.equal(env.REST_ENV_01, 'rest_01', '05')
 			assert.equal(env.REST_ENV_02, 'rest_02', '06')
-			done()
-		}).catch(done)})
-		it('05 - Should support including the access key and secret.', done => { co(function *(){
+		})
+
+		it('05 - Should support including the access key and secret.', () => {
 			const ymlPath = join(__dirname, './data/serverless_01.yml')
 			const cfg = new Config({ _path:ymlPath })
-			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05') })
+			const env = cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05') })
 			assert.equal(env.DATA_01, 'hello dev', '01')
 			assert.equal(env.DATA_02, 'boom boom', '02')
 			assert.equal(env.GRAPHQL_ENV_01, 'graphql_01', '03')
@@ -360,34 +337,33 @@ describe('index', () => {
 			assert.equal(env.REST_ENV_02, 'rest_02', '06')
 			assert.equal(env.AWS_ACCESS_KEY_ID, 'JWUIBJKBUWGGJGJUGUJG', '07')
 			assert.equal(env.AWS_SECRET_ACCESS_KEY, 'dhejkwhdiuewhdjkhdegwfugewf', '08')
-			done()
-		}).catch(done)})
-		it('06 - Should use the provider.region to overide the region defined in the .aws/config file.', done => { co(function *(){
+		})
+
+		it('06 - Should use the provider.region to overide the region defined in the .aws/config file.', () => {
 			const ymlPath = join(__dirname, './data/serverless_02.yml')
 			const cfg = new Config({ _path:ymlPath })
-			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
+			const env = cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
 			assert.equal(env.find(({ name }) => name == 'AWS_ACCESS_KEY_ID').value, 'JWUIBJKBUWGGJGJUGUJG', '07')
 			assert.equal(env.find(({ name }) => name == 'AWS_SECRET_ACCESS_KEY').value, 'dhejkwhdiuewhdjkhdegwfugewf', '08')
 			assert.equal(env.find(({ name }) => name == 'AWS_REGION').value, 'ap-southeast-2', '09')
-			done()
-		}).catch(done)})
-		it('07 - Should support overriding the AWS_REGION environment variable using the \'_force\' option.', done => { co(function *(){
+		})
+
+		it('07 - Should support overriding the AWS_REGION environment variable using the \'_force\' option.', () => {
 			const ymlPath = join(__dirname, './data/serverless_02.yml')
 			const cfg = new Config({ _path:ymlPath, _force: 'provider.region=hello' })
-			const env = yield cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
+			const env = cfg.env({ inclAccessCreds:true, awsDir:join(__dirname, './data/aws_05'), format:'array' })
 			assert.equal(env.find(({ name }) => name == 'AWS_ACCESS_KEY_ID').value, 'JWUIBJKBUWGGJGJUGUJG', '07')
 			assert.equal(env.find(({ name }) => name == 'AWS_SECRET_ACCESS_KEY').value, 'dhejkwhdiuewhdjkhdegwfugewf', '08')
 			assert.equal(env.find(({ name }) => name == 'AWS_REGION').value, 'hello', '09')
-			done()
-		}).catch(done)})
-		it('08 - Should support overriding environment variables that rely on custom variable that have been forced with the \'_force\' option.', done => { co(function *(){
+		})
+
+		it('08 - Should support overriding environment variables that rely on custom variable that have been forced with the \'_force\' option.', () => {
 			const ymlPath = join(__dirname, './data/serverless_05.yml')
 			const customUrl = 'http://super.com'
 			const cfg = new Config({ _path:ymlPath, _force: `custom.messageUrl.dev=${customUrl}` })
-			const env = yield cfg.env()
+			const env = cfg.env()
 			assert.equal(env.MSG_URL, customUrl, '01')
-			done()
-		}).catch(done)})
+		})
 	})
 })
 
