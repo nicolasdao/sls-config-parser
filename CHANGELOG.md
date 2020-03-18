@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/nicolasdao/sls-config-parser/compare/v1.0.0...v1.0.1) (2020-03-18)
+
+
+### Bug Fixes
+
+* travis deploy + vulnerabilities ([690e29d](https://github.com/nicolasdao/sls-config-parser/commit/690e29d2a5beb1d7c1392aee1d249db89782a4de))
+
 ## [1.0.0](https://github.com/nicolasdao/sls-config-parser/compare/v0.1.3...v1.0.0) (2020-03-03)
 
 
