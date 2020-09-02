@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/nicolasdao/sls-config-parser/compare/v1.0.2...v1.0.3) (2020-09-02)
+
+
+### Bug Fixes
+
+* Vulnerabilities ([bb5d1ad](https://github.com/nicolasdao/sls-config-parser/commit/bb5d1ad73a76c5dcae3a761d6a0bfe17890815f8))
+
 ### [1.0.2](https://github.com/nicolasdao/sls-config-parser/compare/v1.0.1...v1.0.2) (2020-07-16)
 
 
