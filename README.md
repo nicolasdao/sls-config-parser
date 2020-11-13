@@ -49,7 +49,7 @@ const { Config } = require('sls-config-parser')
 const defaultCfg = new Config()
 const stagingCfg = new Config({ stage: 'staging' })
 const prodCfg = new Config({ stage: 'prod' })
-const customCfg = new Config({ stage: 'prod', path:'../path-to-another-config/some-other.yml' })
+const customCfg = new Config({ stage: 'prod', _path:'../path-to-another-config/some-other.yml' })
 
 console.log('DEFAULT CONFIG:')
 console.log(defaultCfg.config())
