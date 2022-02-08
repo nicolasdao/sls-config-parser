@@ -338,6 +338,12 @@ const _isPathResolved = (obj,prop) => {
 const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }) => {
 	const { raw='', ref, dotPath='' } = tokenRef	// e.g., p: [ 'resources', 'Resources', 'UserTable', 'Properties', 'TableName' ], raw: 'user_${opt:custom.stage}'
 	const { type='', value } = ref || {}		// e.g., type: 'opt', value:'prod'
+
+	if (!ref[type]) {
+		console.warn(`sls-config-parser: unable to find value for ${tokenRef.dotPath}`);
+		return;
+	}
+
 	const defaultValue = ref[type].alt		// e.g., 'dev'
 	let resolvedValue = value 
 
