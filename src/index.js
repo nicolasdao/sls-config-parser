@@ -8,7 +8,7 @@
 
 const YAML = require('yamljs')
 const { homedir } = require('os')
-const { join, dirname } = require('path')
+const { join, dirname, extname } = require('path')
 const crypto = require('crypto')
 const { file:fileHelp, obj:objHelp, collection } = require('./utils')
 
@@ -381,11 +381,16 @@ const _resolveTokenRef = ({ config, tokenRef, tokenRefs, optTokens, rootFolder }
 			const externalConfigPath = join(rootFolder, ref.file.path[0])
 			const [, ...props] = ref.file.path
 			const propsPath = props.join('.')
-			const externalConfig = _parse(externalConfigPath, optTokens)
-			if (!externalConfig)
-				throw new Error(`'file' with path ${externalConfigPath} located under ${dotPath} is empty.`)
+			const ext = extname(externalConfigPath);
+			if (['.yaml', '.yml'].indexOf(ext) > -1) {
+				const externalConfig = _parse(externalConfigPath, optTokens)
+				if (!externalConfig)
+					throw new Error(`'file' with path ${externalConfigPath} located under ${dotPath} is empty.`)
 
-			resolvedValue = propsPath ? objHelp.get(externalConfig, propsPath) : externalConfig
+				resolvedValue = propsPath ? objHelp.get(externalConfig, propsPath) : externalConfig
+			} else {
+				resolvedValue = fileHelp.read(externalConfigPath, { sync:true });
+			}
 		} else if (type == 'env') {
 			const envName = ((ref.env || {}).path || [])[0] || ''
 			const envValue = envName? process.env[envName] : ''
